@@ -26,7 +26,7 @@ This document describes the routing test system used to verify that Claude, Code
 
 - Claude: disables user-scope `dotnet-artisan`, points marketplace `dotnet-artisan` to this repo path, installs local scope plugin.
 - Copilot: repoints marketplace `dotnet-artisan` to this repo path and reinstalls/updates `dotnet-artisan@dotnet-artisan`.
-- Codex: syncs `plugins/dotnet-artisan/skills/*/` from this repo into `~/.codex/skills/<skill-name>` for direct-skill test runs. Structural smoke checks validate `plugins/dotnet-artisan/.codex-plugin/plugin.json` and `.agents/plugins/marketplace.json`.
+- Codex: syncs `plugins/dotnet-artisan/skills/*/` from this repo into `~/.codex/skills/<skill-name>` for direct-skill test runs. Structural smoke checks validate `plugins/dotnet-artisan/.codex-plugin/plugin.json`.
 - Cleanup: removes `apps/` before and after each run to avoid persisted generated app scaffolds.
 - Restore: after each run, Claude/Copilot marketplaces are restored to the public plugin source (`novotnyllc/dotnet-artisan`) and Codex skills are restored to pre-test state.
 

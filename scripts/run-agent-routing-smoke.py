@@ -287,7 +287,7 @@ def check_codex(skill_dirs: list[Path]) -> list[str]:
     - Flat layout: skill dirs at skills/<name>/ (depth 1, not depth 2)
     - Each has SKILL.md
     - .codex-plugin/plugin.json exists and matches core Claude manifest metadata
-    - .agents/plugins/marketplace.json, when present, resolves to a Codex plugin root
+    - legacy .agents/plugins/marketplace.json, if present, resolves to a Codex plugin root
     - Legacy .agents/openai.yaml metadata is only validated when present
     - Skill directory count matches plugin.json
     """

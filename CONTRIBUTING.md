@@ -223,7 +223,7 @@ PRs that don't bump the version merge without triggering a release (the tag alre
 ### Prerequisites
 
 - GitHub repository is public (or accessible to the marketplace)
-- `plugins/dotnet-artisan/.claude-plugin/plugin.json`, `plugins/dotnet-artisan/.codex-plugin/plugin.json`, `.claude-plugin/marketplace.json`, and `.agents/plugins/marketplace.json` are valid
+- `plugins/dotnet-artisan/.claude-plugin/plugin.json`, `plugins/dotnet-artisan/.codex-plugin/plugin.json`, and `.claude-plugin/marketplace.json` are valid
 - A GitHub Release exists with the target version tag
 
 ### Publishing Steps

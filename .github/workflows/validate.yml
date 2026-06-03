@@ -37,8 +37,8 @@ jobs:
           echo "OK: hooks.json"
           jq empty plugins/dotnet-artisan/.mcp.json
           echo "OK: .mcp.json"
-          jq empty .agents/plugins/marketplace.json
-          echo "OK: Codex marketplace"
+          jq empty plugins/dotnet-artisan/.codex-plugin/plugin.json
+          echo "OK: Codex plugin manifest"
 
       - name: Validate root marketplace.json
         run: |
@@ -306,22 +306,11 @@ jobs:
           codex --version
           claude --version
 
-      - name: Verify Codex marketplace registration
+      - name: Verify Codex plugin manifest
         run: |
           set -euo pipefail
-          REPO_ROOT="$(pwd)"
-          CODEX_TEST_HOME="$(mktemp -d)"
-          trap 'rm -rf "$CODEX_TEST_HOME"' EXIT
-
-          HOME="$CODEX_TEST_HOME" codex plugin marketplace add "$REPO_ROOT" 2>&1 | tee /tmp/codex-marketplace-add.txt
-
-          grep -F 'Added marketplace `dotnet-artisan`' /tmp/codex-marketplace-add.txt
-          grep -F 'Installed marketplace root:' /tmp/codex-marketplace-add.txt
-          grep -F "[marketplaces.dotnet-artisan]" "$CODEX_TEST_HOME/.codex/config.toml"
-          grep -F "source = \"$REPO_ROOT\"" "$CODEX_TEST_HOME/.codex/config.toml"
-
-          test "$(jq -r '.plugins[] | select(.name == "dotnet-artisan") | .source.path' .agents/plugins/marketplace.json)" = "./plugins/dotnet-artisan"
           jq -e '.name == "dotnet-artisan" and (.version | length > 0)' plugins/dotnet-artisan/.codex-plugin/plugin.json >/dev/null
+          jq -e '.skills == "./skills" and .hooks == "./hooks.json" and .mcpServers == "./.mcp.json"' plugins/dotnet-artisan/.codex-plugin/plugin.json >/dev/null
 
       - name: Verify Claude plugin install
         run: |

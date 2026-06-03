@@ -25,7 +25,7 @@ This project uses Flow-Next for task tracking. Use `.flow/bin/flowctl` instead o
 <!-- END FLOW-NEXT -->
 
 
-This repository is a marketplace root containing one **dotnet-artisan** plugin under `plugins/dotnet-artisan`. The plugin provides 9 skills (process + domain) and 14 specialist agents for .NET development. It follows the [Agent Skills](https://github.com/anthropics/agent-skills) open standard.
+This repository contains one **dotnet-artisan** plugin under `plugins/dotnet-artisan`. The plugin provides 9 skills (process + domain) and 14 specialist agents for .NET development. It follows the [Agent Skills](https://github.com/anthropics/agent-skills) open standard.
 
 ## Key Conventions
 
@@ -86,7 +86,6 @@ plugins/dotnet-artisan/.mcp.json                           # MCP server integrat
 plugins/dotnet-artisan/.claude-plugin/plugin.json          # Claude Code plugin manifest
 plugins/dotnet-artisan/.codex-plugin/plugin.json           # Codex plugin manifest
 .claude-plugin/marketplace.json                            # Claude Code marketplace metadata
-.agents/plugins/marketplace.json                           # Codex marketplace metadata
 plugins/dotnet-artisan/scripts/                            # Hook scripts used by plugin manifests
 scripts/                                                    # Repo validation/release scripts
 tests/                                     # Test data
@@ -101,7 +100,6 @@ Key directories:
 - **`plugins/dotnet-artisan/.claude-plugin/`** -- Claude Code plugin manifest
 - **`plugins/dotnet-artisan/.codex-plugin/`** -- Codex plugin manifest with plugin metadata, interface presentation fields, and component path hints
 - **`.claude-plugin/`** -- Root Claude marketplace metadata
-- **`.agents/plugins/`** -- Root Codex marketplace metadata
 
 ## Validation Commands
 
@@ -111,7 +109,7 @@ Both commands must pass before committing changes (run from repo root):
 # 1. Validate skill frontmatter, required fields, directory conventions
 ./scripts/validate-skills.sh
 
-# 2. Validate Claude + Codex plugin and marketplace consistency
+# 2. Validate Claude marketplace metadata plus Claude/Codex plugin consistency
 ./scripts/validate-marketplace.sh
 ```
 
