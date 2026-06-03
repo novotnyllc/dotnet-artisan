@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# validate-marketplace.sh -- Validate plugin.json and marketplace.json for dotnet-artisan.
+# validate-marketplace.sh -- Validate plugin manifests and marketplace metadata for dotnet-artisan.
 #
 # Checks:
 #   1. Claude plugin manifest exists and is valid JSON
@@ -12,10 +12,9 @@
 #   7. .mcp.json has "mcpServers" key
 #   8. scripts/hooks/*.js have valid syntax
 #   9. Codex plugin manifest exists, validates, and stays consistent with the Claude manifest
-#  10. Root Codex marketplace follows the current plugin-entry schema
-#  11. Legacy Codex skill-installer metadata is validated only when present
-#  12. Root Claude marketplace.json validates (delegates to validate-root-marketplace.sh)
-#  13. Claude plugin enrichment fields: author, homepage, repository, license, keywords
+#  10. Legacy Codex skill-installer metadata is validated only when present
+#  11. Root Claude marketplace.json validates (delegates to validate-root-marketplace.sh)
+#  12. Claude plugin enrichment fields: author, homepage, repository, license, keywords
 #
 # Design constraints:
 #   - Single-pass validation (no subprocess spawning per entry, no network)
@@ -421,127 +420,6 @@ else
         fi
     fi
 fi
-
-# --- Codex marketplace (.agents/plugins/marketplace.json) ---
-
-echo ""
-echo "--- Codex marketplace ---"
-
-CODEX_MARKETPLACE="$REPO_ROOT/.agents/plugins/marketplace.json"
-if [ ! -f "$CODEX_MARKETPLACE" ]; then
-    echo "ERROR: .agents/plugins/marketplace.json not present; marketplace root requires a Codex marketplace index"
-    errors=$((errors + 1))
-else
-    if ! jq empty "$CODEX_MARKETPLACE" 2>/dev/null; then
-        echo "ERROR: .agents/plugins/marketplace.json is not valid JSON"
-        errors=$((errors + 1))
-    else
-        echo "OK: .agents/plugins/marketplace.json is valid JSON"
-
-        # Validate name field
-        CODEX_MKT_NAME=$(jq -r '.name // empty' "$CODEX_MARKETPLACE")
-        if [ -z "$CODEX_MKT_NAME" ]; then
-            echo "ERROR: .agents/plugins/marketplace.json missing name field"
-            errors=$((errors + 1))
-        else
-            echo "OK: marketplace name = \"$CODEX_MKT_NAME\""
-        fi
-
-        if jq -e '.interface.displayName | type == "string" and length > 0' "$CODEX_MARKETPLACE" >/dev/null 2>&1; then
-            echo "OK: marketplace interface.displayName present"
-        else
-            echo "ERROR: .agents/plugins/marketplace.json.interface.displayName must be a non-empty string"
-            errors=$((errors + 1))
-        fi
-
-        # Validate plugins array
-        if ! jq -e '.plugins | type == "array" and length > 0' "$CODEX_MARKETPLACE" >/dev/null 2>&1; then
-            echo "ERROR: .agents/plugins/marketplace.json must have non-empty plugins array"
-            errors=$((errors + 1))
-        else
-            CODEX_PLUGIN_COUNT=$(jq '.plugins | length' "$CODEX_MARKETPLACE")
-            echo "OK: $CODEX_PLUGIN_COUNT plugin(s) defined"
-
-            for i in $(seq 0 $((CODEX_PLUGIN_COUNT - 1))); do
-                P_NAME=$(jq -r ".plugins[$i].name // empty" "$CODEX_MARKETPLACE")
-                P_SOURCE_TYPE=$(jq -r ".plugins[$i].source.source // empty" "$CODEX_MARKETPLACE")
-                P_SOURCE_PATH=$(jq -r ".plugins[$i].source.path // empty" "$CODEX_MARKETPLACE")
-                P_POLICY_INSTALLATION=$(jq -r ".plugins[$i].policy.installation // empty" "$CODEX_MARKETPLACE")
-                P_POLICY_AUTHENTICATION=$(jq -r ".plugins[$i].policy.authentication // empty" "$CODEX_MARKETPLACE")
-                P_CATEGORY=$(jq -r ".plugins[$i].category // empty" "$CODEX_MARKETPLACE")
-
-                if [ -z "$P_NAME" ]; then
-                    echo "ERROR: plugins[$i].name is missing"
-                    errors=$((errors + 1))
-                else
-                    echo "OK: plugins[$i].name = \"$P_NAME\""
-                fi
-
-                if [ "$P_SOURCE_TYPE" != "local" ]; then
-                    echo "ERROR: plugins[$i].source.source must be \"local\" (got: \"$P_SOURCE_TYPE\")"
-                    errors=$((errors + 1))
-                fi
-
-                if [ -z "$P_SOURCE_PATH" ]; then
-                    echo "ERROR: plugins[$i].source.path is missing"
-                    errors=$((errors + 1))
-                else
-                    # Reject absolute paths and parent traversal
-                    if [[ "$P_SOURCE_PATH" = /* ]]; then
-                        echo "ERROR: plugins[$i].source.path contains absolute path: $P_SOURCE_PATH"
-                        errors=$((errors + 1))
-                        continue
-                    fi
-                    if [[ "$P_SOURCE_PATH" == *".."* ]]; then
-                        echo "ERROR: plugins[$i].source.path contains path traversal (..): $P_SOURCE_PATH"
-                        errors=$((errors + 1))
-                        continue
-                    fi
-                    # Resolve path relative to repository root (Codex resolves relative to <root>)
-                    RESOLVED="$(cd "$REPO_ROOT/$P_SOURCE_PATH" 2>/dev/null && pwd -P)"
-                    if [ -z "$RESOLVED" ] || [ ! -d "$RESOLVED" ]; then
-                        echo "ERROR: plugins[$i].source.path does not resolve: $P_SOURCE_PATH"
-                        errors=$((errors + 1))
-                    elif [ ! -f "$RESOLVED/.codex-plugin/plugin.json" ]; then
-                        echo "ERROR: plugins[$i] missing .codex-plugin/plugin.json at resolved path"
-                        errors=$((errors + 1))
-                    else
-                        echo "OK: plugins[$i] source resolves with .codex-plugin/plugin.json"
-                    fi
-                fi
-
-                case "$P_POLICY_INSTALLATION" in
-                    NOT_AVAILABLE|AVAILABLE|INSTALLED_BY_DEFAULT)
-                        echo "OK: plugins[$i].policy.installation = \"$P_POLICY_INSTALLATION\""
-                        ;;
-                    *)
-                        echo "ERROR: plugins[$i].policy.installation must be one of NOT_AVAILABLE, AVAILABLE, INSTALLED_BY_DEFAULT"
-                        errors=$((errors + 1))
-                        ;;
-                esac
-
-                case "$P_POLICY_AUTHENTICATION" in
-                    ON_INSTALL|ON_USE)
-                        echo "OK: plugins[$i].policy.authentication = \"$P_POLICY_AUTHENTICATION\""
-                        ;;
-                    *)
-                        echo "ERROR: plugins[$i].policy.authentication must be ON_INSTALL or ON_USE"
-                        errors=$((errors + 1))
-                        ;;
-                esac
-
-                if [ -z "$P_CATEGORY" ]; then
-                    echo "ERROR: plugins[$i].category is missing"
-                    errors=$((errors + 1))
-                else
-                    echo "OK: plugins[$i].category = \"$P_CATEGORY\""
-                fi
-            done
-        fi
-    fi
-fi
-
-echo ""
 
 # --- Codex skill-installer metadata (legacy compatibility) ---
 
