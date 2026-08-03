@@ -56,13 +56,10 @@ validate_path_safe() {
         local resolved
         # Use python3 for portable symlink-resolving realpath (macOS lacks GNU realpath)
         resolved="$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$full_path")"
-        case "$resolved" in
-            "$PLUGIN_DIR"/*) ;;  # OK - under plugin dir
-            *)
-                echo "ERROR: $label resolves outside plugin directory: $path -> $resolved"
-                return 1
-                ;;
-        esac
+        if ! python3 -c 'import os,sys; root=os.path.realpath(sys.argv[1]); path=os.path.realpath(sys.argv[2]); raise SystemExit(0 if os.path.commonpath([root, path]) == root else 1)' "$PLUGIN_DIR" "$full_path"; then
+            echo "ERROR: $label resolves outside plugin directory: $path -> $resolved"
+            return 1
+        fi
     fi
 
     return 0
@@ -108,6 +105,7 @@ else
 
             # Check each skill directory exists and contains SKILL.md
             while IFS= read -r skill_path; do
+                skill_path="${skill_path%$'\r'}"
                 if ! validate_path_safe "$skill_path" "skills[]"; then
                     errors=$((errors + 1))
                     continue
@@ -136,6 +134,7 @@ else
 
             # Check each agent file exists
             while IFS= read -r agent_path; do
+                agent_path="${agent_path%$'\r'}"
                 if ! validate_path_safe "$agent_path" "agents[]"; then
                     errors=$((errors + 1))
                     continue
@@ -260,6 +259,9 @@ if [ -f "$HOOKS_FILE" ]; then
     if ! jq -e '.hooks' "$HOOKS_FILE" >/dev/null 2>&1; then
         echo "ERROR: hooks.json missing 'hooks' key"
         errors=$((errors + 1))
+    elif ! jq -e 'keys - ["description", "hooks"] | length == 0' "$HOOKS_FILE" >/dev/null 2>&1; then
+        echo "ERROR: hooks.json contains unsupported top-level keys"
+        errors=$((errors + 1))
     else
         echo "OK: hooks.json has 'hooks' key"
     fi
@@ -273,6 +275,9 @@ MCP_FILE="$PLUGIN_DIR/.mcp.json"
 if [ -f "$MCP_FILE" ]; then
     if ! jq -e '.mcpServers' "$MCP_FILE" >/dev/null 2>&1; then
         echo "ERROR: .mcp.json missing 'mcpServers' key"
+        errors=$((errors + 1))
+    elif jq -e '.mcpServers["mcp-windbg"]' "$MCP_FILE" >/dev/null 2>&1; then
+        echo "ERROR: .mcp.json must not auto-register the Windows-only mcp-windbg server"
         errors=$((errors + 1))
     else
         echo "OK: .mcp.json has 'mcpServers' key"
@@ -350,21 +355,8 @@ else
         fi
 
         if jq -e '.hooks' "$CODEX_MANIFEST" >/dev/null 2>&1; then
-            CODEX_HOOKS_TYPE=$(jq -r '.hooks | type' "$CODEX_MANIFEST" 2>/dev/null)
-            if [ "$CODEX_HOOKS_TYPE" != "string" ]; then
-                echo "ERROR: .codex-plugin/plugin.json.hooks must be a string path"
-                errors=$((errors + 1))
-            else
-                CODEX_HOOKS_PATH=$(jq -r '.hooks' "$CODEX_MANIFEST")
-                if ! validate_path_safe "$CODEX_HOOKS_PATH" "codex.hooks"; then
-                    errors=$((errors + 1))
-                elif [ ! -f "$PLUGIN_DIR/$CODEX_HOOKS_PATH" ]; then
-                    echo "ERROR: Codex hooks path does not exist: $CODEX_HOOKS_PATH"
-                    errors=$((errors + 1))
-                else
-                    echo "OK: Codex hooks path resolves: $CODEX_HOOKS_PATH"
-                fi
-            fi
+            echo "ERROR: .codex-plugin/plugin.json.hooks is unsupported; hooks.json is auto-discovered"
+            errors=$((errors + 1))
         fi
 
         if jq -e '.mcpServers' "$CODEX_MANIFEST" >/dev/null 2>&1; then
@@ -431,6 +423,7 @@ if [ ! -f "$ROOT_OPENAI" ]; then
 elif [ -f "$PLUGIN_JSON" ] && jq -e '.skills | type == "array"' "$PLUGIN_JSON" >/dev/null 2>&1; then
     echo "OK: legacy .agents/openai.yaml exists"
     while IFS= read -r skill_path; do
+        skill_path="${skill_path%$'\r'}"
         if ! validate_path_safe "$skill_path" "skills[]"; then
             errors=$((errors + 1))
             continue

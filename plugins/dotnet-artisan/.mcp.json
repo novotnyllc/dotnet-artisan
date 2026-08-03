@@ -6,17 +6,8 @@
       "env": {}
     },
     "microsoftdocs-mcp": {
-			"type": "http",
-			"url": "https://learn.microsoft.com/api/mcp"
-		},
-     "mcp-windbg": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/svnscha/mcp-windbg",
-        "mcp-windbg"
-      ]
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
     }
   }
 }

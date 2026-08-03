@@ -66,12 +66,10 @@ The plugin configures these MCP servers in `plugins/dotnet-artisan/.mcp.json`:
 |-------|-----------|----------------|---------|
 | `context7` | stdio | `npx -y @upstash/context7-mcp@latest` | Library and framework documentation lookup |
 | `microsoftdocs-mcp` | HTTP | `https://learn.microsoft.com/api/mcp` | Official Microsoft Learn search/fetch for .NET and Azure docs |
-| `mcp-windbg` | stdio | `uvx --from git+https://github.com/svnscha/mcp-windbg mcp-windbg` | WinDbg MCP integration for dump/live debugging workflows |
 
 ### Requirements
 
 - **Node.js** is required to execute hook scripts (`plugins/dotnet-artisan/scripts/hooks/*.js`) and for MCP servers that use `npx` (Context7). Claude Code requires Node.js on all platforms, so this is always available. Verify with `node --version`.
-- **Python + uv/uvx** are required for `mcp-windbg`. Verify with `uvx --version`.
 - MCP servers start automatically when the plugin is enabled. After enabling or disabling the plugin, restart Claude Code to apply MCP server changes.
 
 ---

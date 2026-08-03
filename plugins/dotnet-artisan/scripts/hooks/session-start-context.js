@@ -5,7 +5,7 @@
 // Checks if the current directory is a .NET project and injects context
 // about target framework and project structure.
 //
-// Output: JSON with additionalContext on stdout.
+// Output: Codex hook JSON with additionalContext on stdout.
 // Exit code: always 0 (never blocks).
 
 "use strict";
@@ -76,10 +76,20 @@ try {
     context += " " + projectContext;
   }
 
-  console.log(JSON.stringify({ additionalContext: context }));
+  console.log(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: "SessionStart",
+      additionalContext: context,
+    },
+  }));
 } catch {
   // Never block -- emit empty context on any error.
-  console.log(JSON.stringify({ additionalContext: "" }));
+  console.log(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: "SessionStart",
+      additionalContext: "",
+    },
+  }));
 }
 
 process.exit(0);

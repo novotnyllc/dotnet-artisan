@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-08-02
+
+### Fixed
+
+- **Codex hook loading and output** -- Removed unsupported hook metadata and emitted the required SessionStart result envelope so Codex loads and executes both plugin hooks.
+- **Codex manifest validation** -- Removed the unsupported `hooks` manifest field and added regression checks for both invalid hook-file keys and Codex manifest drift.
+
+### Removed
+
+- **Bundled WinDbg MCP server** -- Removed the Windows-only WinDbg server from the cross-platform plugin MCP configuration.
+
 ## [1.4.1] - 2026-04-30
 
 ### Added
@@ -237,7 +248,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README with skill catalog, Mermaid architecture diagrams, and cross-agent documentation
 - CONTRIBUTING guide with skill authoring conventions and PR process
 
-[unreleased]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.4.1...HEAD
+[unreleased]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.4.2...HEAD
+[1.4.2]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.4.1...dotnet-artisan/v1.4.2
 [1.4.1]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.4.0...dotnet-artisan/v1.4.1
 [1.4.0]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.3.0...dotnet-artisan/v1.4.0
 [1.3.0]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.2.0...dotnet-artisan/v1.3.0
