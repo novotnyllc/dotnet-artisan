@@ -310,7 +310,7 @@ jobs:
         run: |
           set -euo pipefail
           jq -e '.name == "dotnet-artisan" and (.version | length > 0)' plugins/dotnet-artisan/.codex-plugin/plugin.json >/dev/null
-          jq -e '.skills == "./skills" and .hooks == "./hooks.json" and .mcpServers == "./.mcp.json"' plugins/dotnet-artisan/.codex-plugin/plugin.json >/dev/null
+          jq -e '.skills == "./skills" and (has("hooks") | not) and .mcpServers == "./.mcp.json"' plugins/dotnet-artisan/.codex-plugin/plugin.json >/dev/null
 
       - name: Verify Claude plugin install
         run: |
