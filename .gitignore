@@ -482,8 +482,6 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# Ralph ephemeral run logs
-scripts/ralph/runs/
 .claude/settings.local.json
 
 # Smoke test output

@@ -214,7 +214,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Root-level `plugin.json` (replaced by marketplace.json + per-plugin plugin.json)
 - Cross-agent dist generation pipeline (`generate_dist.py`, `validate_cross_agent.py`) -- source files are the plugin, no transformation needed
 - GitHub Pages deployment from release workflow
-- Stale files: `docs/fleet-review-rubric.md`, `docs/review-reports/`, `scripts/ralph/runs/`, dist pipeline scripts
+- Stale files: `docs/fleet-review-rubric.md`, `docs/review-reports/`, dist pipeline scripts
 - Archived fleet review rubric and consolidated findings as historical snapshots (fn-29 audit, fn-37 cleanup, fn-40 resolution)
 
 ## [0.1.0] - 2026-02-14
