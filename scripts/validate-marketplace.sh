@@ -55,8 +55,7 @@ validate_path_safe() {
     if [ -e "$full_path" ]; then
         local resolved
         # Use python3 for portable symlink-resolving realpath (macOS lacks GNU realpath)
-        resolved="$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$full_path")"
-        if ! python3 -c 'import os,sys; root=os.path.realpath(sys.argv[1]); path=os.path.realpath(sys.argv[2]); raise SystemExit(0 if os.path.commonpath([root, path]) == root else 1)' "$PLUGIN_DIR" "$full_path"; then
+        if ! resolved="$(python3 -c 'import os,sys; root=os.path.realpath(sys.argv[1]); path=os.path.realpath(sys.argv[2]); print(path); raise SystemExit(0 if os.path.commonpath([root, path]) == root else 1)' "$PLUGIN_DIR" "$full_path")"; then
             echo "ERROR: $label resolves outside plugin directory: $path -> $resolved"
             return 1
         fi
