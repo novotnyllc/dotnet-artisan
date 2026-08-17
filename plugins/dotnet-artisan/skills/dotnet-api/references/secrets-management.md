@@ -109,8 +109,8 @@ In the default ASP.NET Core configuration stack, environment variables override 
 ```bash
 # These environment variables map to configuration sections:
 export ConnectionStrings__DefaultDb="Server=prod-db;Database=myapp;..."
-export Smtp__ApiKey="SG.production-key"
-export Jwt__SigningKey="production-signing-key-256-bits"
+export Smtp__ApiKey="SG.REPLACE_VIA_SECRETS_MANAGER"
+export Jwt__SigningKey="REPLACE_VIA_SECRETS_MANAGER_MIN_32_CHARS"
 
 # With a prefix (recommended to avoid collisions):
 export MYAPP_ConnectionStrings__DefaultDb="Server=prod-db;..."

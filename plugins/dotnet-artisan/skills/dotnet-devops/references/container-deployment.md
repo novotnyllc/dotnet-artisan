@@ -235,6 +235,8 @@ services:
     ports:
       - "8080:8080"
     environment:
+      # WARNING: Use "Production" for deployed environments. Development mode
+      # exposes detailed error pages and stack traces.
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=orders;Username=app;Password=devpassword
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317

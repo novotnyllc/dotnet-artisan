@@ -259,7 +259,10 @@ builder.Services.AddOpenApi("v2", options =>
 });
 
 // Serves /openapi/v1.json and /openapi/v2.json
-app.MapOpenApi();
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
 ```
 
 ### Exporting OpenAPI for Static Documentation

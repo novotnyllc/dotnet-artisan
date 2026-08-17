@@ -225,26 +225,35 @@ builder.Services.AddOpenApi();
 
 ```csharp
 // Before (Swashbuckle)
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // After (built-in)
-app.MapOpenApi(); // Serves raw OpenAPI JSON at /openapi/v1.json
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi(); // Serves raw OpenAPI JSON at /openapi/v1.json
+}
 ```
 
 4. For Swagger UI, add a standalone UI package or use Scalar:
 
 ```csharp
-// Option 1: Scalar (modern, built-in support in .NET 10)
-// <PackageReference Include="Aspire.Dashboard.Components.Scalar" ... /> or use MapScalarApiReference
-app.MapScalarApiReference(); // .NET 10
-
-// Option 2: Swagger UI standalone
-// <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="..." />
-app.UseSwaggerUI(options =>
+if (app.Environment.IsDevelopment())
 {
-    options.SwaggerEndpoint("/openapi/v1.json", "v1");
-});
+    // Option 1: Scalar (modern, built-in support in .NET 10)
+    // <PackageReference Include="Aspire.Dashboard.Components.Scalar" ... /> or use MapScalarApiReference
+    app.MapScalarApiReference(); // .NET 10
+
+    // Option 2: Swagger UI standalone
+    // <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="..." />
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "v1");
+    });
+}
 ```
 
 5. Migrate Swashbuckle filters to transformers:
@@ -275,8 +284,12 @@ builder.Services.AddOpenApiDocument(options =>
 });
 
 var app = builder.Build();
-app.UseOpenApi();    // Serves /swagger/v1/swagger.json
-app.UseSwaggerUi(); // Serves /swagger UI
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseOpenApi();    // Serves /swagger/v1/swagger.json
+    app.UseSwaggerUi(); // Serves /swagger UI
+}
 ```
 
 ### Client Generation

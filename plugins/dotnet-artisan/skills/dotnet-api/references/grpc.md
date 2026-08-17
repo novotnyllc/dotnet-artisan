@@ -653,6 +653,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("GrpcWeb", policy =>
     {
         policy.WithOrigins("https://app.example.com")
+              // Production: prefer explicit header/method lists over AllowAny*
+              // to follow the principle of least privilege (see api-security.md).
+              // gRPC-Web requires at minimum: Content-Type, X-Grpc-Web, X-User-Agent
               .AllowAnyHeader()
               .AllowAnyMethod()
               .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding");
