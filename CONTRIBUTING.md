@@ -24,10 +24,10 @@ The section below provides a quick reference. Skills are the primary content uni
 All skills follow a flat directory structure within the plugin:
 
 ```
-skills/<skill-name>/SKILL.md
+plugins/dotnet-artisan/skills/<skill-name>/SKILL.md
 ```
 
-For example: `skills/dotnet-csharp/SKILL.md`
+For example: `plugins/dotnet-artisan/skills/dotnet-csharp/SKILL.md`
 
 ### SKILL.md Frontmatter
 
@@ -95,7 +95,7 @@ Agents are specialist personas that combine multiple skills with domain expertis
 Place agent files at:
 
 ```
-agents/<agent-name>.md
+plugins/dotnet-artisan/agents/<agent-name>.md
 ```
 
 ### Agent Frontmatter
@@ -169,15 +169,16 @@ A separate shared script validates the root `.claude-plugin/marketplace.json` sc
 
 #### Version Management
 
-The canonical version source of truth is `.claude-plugin/plugin.json`. The version field is propagated to five locations by the bump script:
+The canonical version source of truth is `plugins/dotnet-artisan/.claude-plugin/plugin.json`. The version field is propagated to six locations by the bump script:
 
-1. `.claude-plugin/plugin.json` -- canonical source
-2. `.claude-plugin/marketplace.json` -- root marketplace plugin entry `.plugins[].version`
-3. `.claude-plugin/marketplace.json` -- root marketplace `metadata.version`
-4. `README.md` -- version badge
-5. `CHANGELOG.md` -- promote `[Unreleased]` section and update footer links
+1. `plugins/dotnet-artisan/.claude-plugin/plugin.json` -- canonical source
+2. `plugins/dotnet-artisan/.codex-plugin/plugin.json` -- Codex plugin manifest
+3. `.claude-plugin/marketplace.json` -- root marketplace plugin entry `.plugins[].version`
+4. `.claude-plugin/marketplace.json` -- root marketplace `metadata.version`
+5. `README.md` -- version badge
+6. `CHANGELOG.md` -- promote `[Unreleased]` section and update footer links
 
-CI validates version consistency across the first three locations (3-way check in `validate.yml`).
+CI validates version consistency across the Claude and Codex plugin manifests plus root marketplace metadata.
 
 #### Bump Script
 
@@ -222,7 +223,7 @@ PRs that don't bump the version merge without triggering a release (the tag alre
 ### Prerequisites
 
 - GitHub repository is public (or accessible to the marketplace)
-- `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` are valid
+- `plugins/dotnet-artisan/.claude-plugin/plugin.json`, `plugins/dotnet-artisan/.codex-plugin/plugin.json`, and `.claude-plugin/marketplace.json` are valid
 - A GitHub Release exists with the target version tag
 
 ### Publishing Steps

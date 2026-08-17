@@ -10,7 +10,7 @@ The dotnet-artisan plugin includes two hook configurations that fire automatical
 
 ### SessionStart Hook (startup)
 
-The `scripts/hooks/session-start-context.js` hook fires once when a new Claude Code session starts. It detects whether the current directory is a .NET project and injects context:
+The `plugins/dotnet-artisan/scripts/hooks/session-start-context.js` hook fires once when a new Claude Code session starts. It detects whether the current directory is a .NET project and injects context:
 
 - Detects `.sln`/`.slnx` solution files (up to 3 directories deep)
 - Detects `.csproj` project files (up to 3 directories deep)
@@ -27,7 +27,7 @@ This context helps Claude understand the project environment from the start of t
 
 ### UserPromptSubmit Hook
 
-The `scripts/hooks/user-prompt-dotnet-reminder.js` hook fires on every prompt submission and injects `additionalContext` routing guidance when either condition is true:
+The `plugins/dotnet-artisan/scripts/hooks/user-prompt-dotnet-reminder.js` hook fires on every prompt submission and injects `additionalContext` routing guidance when either condition is true:
 
 - The current directory looks like a .NET repo (`.sln`, `.slnx`, `.csproj`, `.cs`, or `global.json`)
 - The prompt text contains .NET intent keywords (for example: `dotnet`, `.NET`, `C#`, `csproj`, `MSBuild`, `NuGet`, `Roslyn`, `xUnit`, `ASP.NET`, `Blazor`, `MAUI`, `WinUI`, `WPF`, `WinForms`, `EF Core`, `BenchmarkDotNet`)
@@ -60,18 +60,16 @@ To re-enable hooks after disabling, remove the `disableAllHooks` setting or togg
 
 ## MCP Server Configuration
 
-The plugin configures these MCP servers in `.mcp.json`:
+The plugin configures these MCP servers in `plugins/dotnet-artisan/.mcp.json`:
 
 | Server | Transport | Command / URL | Purpose |
 |-------|-----------|----------------|---------|
 | `context7` | stdio | `npx -y @upstash/context7-mcp@latest` | Library and framework documentation lookup |
 | `microsoftdocs-mcp` | HTTP | `https://learn.microsoft.com/api/mcp` | Official Microsoft Learn search/fetch for .NET and Azure docs |
-| `mcp-windbg` | stdio | `uvx --from git+https://github.com/svnscha/mcp-windbg mcp-windbg` | WinDbg MCP integration for dump/live debugging workflows |
 
 ### Requirements
 
-- **Node.js** is required to execute hook scripts (`scripts/hooks/*.js`) and for MCP servers that use `npx` (Context7). Claude Code requires Node.js on all platforms, so this is always available. Verify with `node --version`.
-- **Python + uv/uvx** are required for `mcp-windbg`. Verify with `uvx --version`.
+- **Node.js** is required to execute hook scripts (`plugins/dotnet-artisan/scripts/hooks/*.js`) and for MCP servers that use `npx` (Context7). Claude Code requires Node.js on all platforms, so this is always available. Verify with `node --version`.
 - MCP servers start automatically when the plugin is enabled. After enabling or disabling the plugin, restart Claude Code to apply MCP server changes.
 
 ---

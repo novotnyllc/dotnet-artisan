@@ -29,7 +29,7 @@ jobs:
           set -euo pipefail
           git fetch --force --tags
 
-          VERSION=$(jq -r '.version' .claude-plugin/plugin.json)
+          VERSION=$(jq -r '.version' plugins/dotnet-artisan/.claude-plugin/plugin.json)
           TAG="dotnet-artisan/v${VERSION}"
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"

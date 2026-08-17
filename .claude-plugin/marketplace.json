@@ -1,21 +1,21 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "dotnet-artisan",
-  "description": "Directory of .NET development plugins for Claude Code",
+  "description": "Marketplace metadata for the dotnet-artisan Claude Code plugin",
   "owner": {
     "name": "Claire Novotny",
     "url": "https://github.com/novotnyllc"
   },
   "metadata": {
-    "description": "Marketplace hosting .NET development plugins",
-    "version": "1.4.0"
+    "description": "Marketplace metadata for the dotnet-artisan plugin",
+    "version": "1.4.2"
   },
   "plugins": [
     {
       "name": "dotnet-artisan",
-      "source": "./",
+      "source": "./plugins/dotnet-artisan",
       "description": "Comprehensive .NET development skills for modern C# and .NET",
-      "version": "1.4.0",
+      "version": "1.4.2",
       "author": {
         "name": "Claire Novotny",
         "url": "https://github.com/novotnyllc"

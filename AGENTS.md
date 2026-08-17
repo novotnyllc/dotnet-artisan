@@ -1,31 +1,6 @@
 # dotnet-artisan -- Plugin Instructions
 
-<!-- BEGIN FLOW-NEXT -->
-## Flow-Next
-
-This project uses Flow-Next for task tracking. Use `.flow/bin/flowctl` instead of markdown TODOs or TodoWrite.
-
-**Quick commands:**
-```bash
-.flow/bin/flowctl list                # List all epics + tasks
-.flow/bin/flowctl epics               # List all epics
-.flow/bin/flowctl tasks --epic fn-N   # List tasks for epic
-.flow/bin/flowctl ready --epic fn-N   # What's ready
-.flow/bin/flowctl show fn-N.M         # View task
-.flow/bin/flowctl start fn-N.M        # Claim task
-.flow/bin/flowctl done fn-N.M --summary-file s.md --evidence-json e.json
-```
-
-**Rules:**
-- Use `.flow/bin/flowctl` for ALL task tracking
-- Do NOT create markdown TODOs or use TodoWrite
-- Re-anchor (re-read spec + status) before every task
-
-**More info:** `.flow/bin/flowctl --help` or read `.flow/usage.md`
-<!-- END FLOW-NEXT -->
-
-
-This directory contains **dotnet-artisan**, a Claude Code plugin providing 9 skills (process + domain) and 14 specialist agents for .NET development. It follows the [Agent Skills](https://github.com/anthropics/agent-skills) open standard.
+This repository contains one **dotnet-artisan** plugin under `plugins/dotnet-artisan`. The plugin provides 9 skills (process + domain) and 14 specialist agents for .NET development. It follows the [Agent Skills](https://github.com/anthropics/agent-skills) open standard.
 
 ## Key Conventions
 
@@ -78,28 +53,28 @@ Descriptions must follow the **Action + Domain + Differentiator** formula using 
 ## File Structure
 
 ```
-skills/<skill-name>/SKILL.md               # 9 skills (flat layout)
-skills/<skill-name>/references/*.md        # Companion files with deep content
-agents/<agent-name>.md                     # 14 specialist agents
-hooks/hooks.json                           # Session hooks (startup + user prompt reminder)
-.mcp.json                                  # MCP server integrations (shared by Claude + Codex)
-.claude-plugin/plugin.json                 # Claude Code plugin manifest
-.claude-plugin/marketplace.json            # Claude Code marketplace metadata
-.codex-plugin/plugin.json                  # Codex plugin manifest
-.agents/plugins/marketplace.json           # Codex marketplace discovery
-scripts/                                   # Hook shell scripts
+plugins/dotnet-artisan/skills/<skill-name>/SKILL.md        # 9 skills (flat layout)
+plugins/dotnet-artisan/skills/<skill-name>/references/*.md # Companion files with deep content
+plugins/dotnet-artisan/agents/<agent-name>.md              # 14 specialist agents
+plugins/dotnet-artisan/hooks.json                          # Session hooks (startup + user prompt reminder)
+plugins/dotnet-artisan/.mcp.json                           # MCP server integrations (shared by Claude + Codex)
+plugins/dotnet-artisan/.claude-plugin/plugin.json          # Claude Code plugin manifest
+plugins/dotnet-artisan/.codex-plugin/plugin.json           # Codex plugin manifest
+.claude-plugin/marketplace.json                            # Claude Code marketplace metadata
+plugins/dotnet-artisan/scripts/                            # Hook scripts used by plugin manifests
+scripts/                                                    # Repo validation/release scripts
 tests/                                     # Test data
 docs/                                      # Plugin-specific documentation
 ```
 
 Key directories:
-- **`skills/`** -- All skill content in a flat layout (one directory per skill, with `references/` companion files)
-- **`agents/`** -- Specialist agent definitions with frontmatter, preloaded skills, and workflows
-- **`hooks/`** -- Session lifecycle hooks (startup context + user prompt reminder)
-- **`scripts/`** -- Hook shell scripts
-- **`.claude-plugin/`** -- Claude Code plugin manifest (plugin.json) and marketplace metadata (marketplace.json)
-- **`.codex-plugin/`** -- Codex plugin manifest (plugin.json) with plugin metadata, interface presentation fields, and component path hints
-- **`.agents/plugins/`** -- Codex marketplace discovery file
+- **`plugins/dotnet-artisan/skills/`** -- All skill content in a flat layout (one directory per skill, with `references/` companion files)
+- **`plugins/dotnet-artisan/agents/`** -- Specialist agent definitions with frontmatter, preloaded skills, and workflows
+- **`plugins/dotnet-artisan/hooks.json`** -- Session lifecycle hooks (startup context + user prompt reminder)
+- **`plugins/dotnet-artisan/scripts/`** -- Hook scripts invoked from plugin manifests
+- **`plugins/dotnet-artisan/.claude-plugin/`** -- Claude Code plugin manifest
+- **`plugins/dotnet-artisan/.codex-plugin/`** -- Codex plugin manifest with plugin metadata, interface presentation fields, and component path hints
+- **`.claude-plugin/`** -- Root Claude marketplace metadata
 
 ## Validation Commands
 
@@ -109,7 +84,7 @@ Both commands must pass before committing changes (run from repo root):
 # 1. Validate skill frontmatter, required fields, directory conventions
 ./scripts/validate-skills.sh
 
-# 2. Validate Claude + Codex plugin and marketplace consistency
+# 2. Validate Claude marketplace metadata plus Claude/Codex plugin consistency
 ./scripts/validate-marketplace.sh
 ```
 
@@ -121,8 +96,8 @@ Run both in sequence:
 
 ## Development Workflow
 
-1. **Edit skills** -- Modify or create `SKILL.md` files under `skills/<skill-name>/`
-2. **Register in plugin.json** -- Add new skill paths to the `skills` array in `.claude-plugin/plugin.json`
+1. **Edit skills** -- Modify or create `SKILL.md` files under `plugins/dotnet-artisan/skills/<skill-name>/`
+2. **Register in plugin.json** -- Add new skill paths to the `skills` array in `plugins/dotnet-artisan/.claude-plugin/plugin.json`
 3. **Validate locally** -- Run both validation commands above
 4. **Commit** -- Use conventional commit messages with appropriate scope
 5. **CI validates** -- The `validate.yml` workflow runs the same validation commands on push and PR

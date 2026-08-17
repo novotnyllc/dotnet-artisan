@@ -41,7 +41,7 @@ done
 if [ -z "$SINCE_TAG" ]; then
     # Try the version in plugin.json first. If its tag exists, use it.
     # If not (version was already bumped), find the nearest prior version tag.
-    PLUGIN_JSON="$REPO_ROOT/.claude-plugin/plugin.json"
+    PLUGIN_JSON="$REPO_ROOT/plugins/dotnet-artisan/.claude-plugin/plugin.json"
     if [ -f "$PLUGIN_JSON" ] && command -v jq &>/dev/null; then
         CURRENT_VERSION=$(jq -r '.version' "$PLUGIN_JSON")
         if [ -n "$CURRENT_VERSION" ] && [ "$CURRENT_VERSION" != "null" ]; then

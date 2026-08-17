@@ -13,7 +13,8 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
-HOOK_DIR="$REPO_ROOT/scripts/hooks"
+PLUGIN_DIR="$REPO_ROOT/plugins/dotnet-artisan"
+HOOK_DIR="$PLUGIN_DIR/scripts/hooks"
 
 PYTHON_BIN=""
 if command -v python3 >/dev/null 2>&1; then
@@ -71,7 +72,8 @@ echo "=== Hook Contract Validation ==="
 echo "--- SessionStart hook ---"
 SESSION_OUT="$(node "$HOOK_DIR/session-start-context.js")"
 assert_json "$SESSION_OUT"
-assert_json_path_string "$SESSION_OUT" "additionalContext"
+assert_json_path_contains "$SESSION_OUT" "hookSpecificOutput.hookEventName" "SessionStart"
+assert_json_path_string "$SESSION_OUT" "hookSpecificOutput.additionalContext"
 echo "OK: session-start-context.js emits valid JSON"
 
 echo "--- UserPromptSubmit hook ---"

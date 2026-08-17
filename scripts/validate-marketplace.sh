@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# validate-marketplace.sh -- Validate plugin.json and marketplace.json for dotnet-artisan.
+# validate-marketplace.sh -- Validate plugin manifests and marketplace metadata for dotnet-artisan.
 #
 # Checks:
 #   1. Claude plugin manifest exists and is valid JSON
@@ -8,14 +8,13 @@
 #   3. All skill directories referenced in the Claude plugin manifest contain SKILL.md
 #   4. All agent files referenced in the Claude plugin manifest exist
 #   5. hooks and mcpServers paths exist
-#   6. hooks/hooks.json has "hooks" key
+#   6. hooks.json has "hooks" key
 #   7. .mcp.json has "mcpServers" key
 #   8. scripts/hooks/*.js have valid syntax
 #   9. Codex plugin manifest exists, validates, and stays consistent with the Claude manifest
-#  10. Codex marketplace exists and follows the current plugin-entry schema
-#  11. Legacy Codex skill-installer metadata is validated only when present
-#  12. Root Claude marketplace.json validates (delegates to validate-root-marketplace.sh)
-#  13. Claude plugin enrichment fields: author, homepage, repository, license, keywords
+#  10. Legacy Codex skill-installer metadata is validated only when present
+#  11. Root Claude marketplace.json validates (delegates to validate-root-marketplace.sh)
+#  12. Claude plugin enrichment fields: author, homepage, repository, license, keywords
 #
 # Design constraints:
 #   - Single-pass validation (no subprocess spawning per entry, no network)
@@ -27,7 +26,7 @@ set -euo pipefail
 
 # Navigate to repository root (parent of scripts/), canonicalized for symlink safety
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
-PLUGIN_DIR="$REPO_ROOT"
+PLUGIN_DIR="$REPO_ROOT/plugins/dotnet-artisan"
 
 PLUGIN_JSON="$PLUGIN_DIR/.claude-plugin/plugin.json"
 
@@ -56,14 +55,10 @@ validate_path_safe() {
     if [ -e "$full_path" ]; then
         local resolved
         # Use python3 for portable symlink-resolving realpath (macOS lacks GNU realpath)
-        resolved="$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$full_path")"
-        case "$resolved" in
-            "$PLUGIN_DIR"/*) ;;  # OK - under plugin dir
-            *)
-                echo "ERROR: $label resolves outside plugin directory: $path -> $resolved"
-                return 1
-                ;;
-        esac
+        if ! resolved="$(python3 -c 'import os,sys; root=os.path.realpath(sys.argv[1]); path=os.path.realpath(sys.argv[2]); print(path); raise SystemExit(0 if os.path.commonpath([root, path]) == root else 1)' "$PLUGIN_DIR" "$full_path")"; then
+            echo "ERROR: $label resolves outside plugin directory: $path -> $resolved"
+            return 1
+        fi
     fi
 
     return 0
@@ -109,6 +104,7 @@ else
 
             # Check each skill directory exists and contains SKILL.md
             while IFS= read -r skill_path; do
+                skill_path="${skill_path%$'\r'}"
                 if ! validate_path_safe "$skill_path" "skills[]"; then
                     errors=$((errors + 1))
                     continue
@@ -137,6 +133,7 @@ else
 
             # Check each agent file exists
             while IFS= read -r agent_path; do
+                agent_path="${agent_path%$'\r'}"
                 if ! validate_path_safe "$agent_path" "agents[]"; then
                     errors=$((errors + 1))
                     continue
@@ -151,7 +148,7 @@ else
             done < <(jq -r '.agents[]' "$PLUGIN_JSON" 2>/dev/null)
         fi
 
-        # Validate hooks (optional in plugin.json; auto-discovered from hooks/hooks.json)
+        # Validate hooks (optional in plugin.json; auto-discovered from hooks.json)
         if jq -e '.hooks' "$PLUGIN_JSON" >/dev/null 2>&1; then
             hooks_type=$(jq -r '.hooks | type' "$PLUGIN_JSON" 2>/dev/null)
             if [ "$hooks_type" != "string" ]; then
@@ -172,7 +169,7 @@ else
                 fi
             fi
         else
-            echo "OK: hooks omitted (auto-discovered from hooks/hooks.json)"
+            echo "OK: hooks omitted (auto-discovered from hooks.json)"
         fi
 
         # Validate mcpServers (optional in plugin.json; auto-discovered from .mcp.json)
@@ -255,17 +252,20 @@ echo ""
 
 echo "--- hooks/MCP content ---"
 
-# 1. Validate hooks/hooks.json has a "hooks" key
-HOOKS_FILE="$PLUGIN_DIR/hooks/hooks.json"
+# 1. Validate hooks.json has a "hooks" key
+HOOKS_FILE="$PLUGIN_DIR/hooks.json"
 if [ -f "$HOOKS_FILE" ]; then
     if ! jq -e '.hooks' "$HOOKS_FILE" >/dev/null 2>&1; then
-        echo "ERROR: hooks/hooks.json missing 'hooks' key"
+        echo "ERROR: hooks.json missing 'hooks' key"
+        errors=$((errors + 1))
+    elif ! jq -e 'keys - ["description", "hooks"] | length == 0' "$HOOKS_FILE" >/dev/null 2>&1; then
+        echo "ERROR: hooks.json contains unsupported top-level keys"
         errors=$((errors + 1))
     else
-        echo "OK: hooks/hooks.json has 'hooks' key"
+        echo "OK: hooks.json has 'hooks' key"
     fi
 else
-    echo "WARN: hooks/hooks.json not found (skipping content validation)"
+    echo "WARN: hooks.json not found (skipping content validation)"
     warnings=$((warnings + 1))
 fi
 
@@ -274,6 +274,9 @@ MCP_FILE="$PLUGIN_DIR/.mcp.json"
 if [ -f "$MCP_FILE" ]; then
     if ! jq -e '.mcpServers' "$MCP_FILE" >/dev/null 2>&1; then
         echo "ERROR: .mcp.json missing 'mcpServers' key"
+        errors=$((errors + 1))
+    elif jq -e '.mcpServers["mcp-windbg"]' "$MCP_FILE" >/dev/null 2>&1; then
+        echo "ERROR: .mcp.json must not auto-register the Windows-only mcp-windbg server"
         errors=$((errors + 1))
     else
         echo "OK: .mcp.json has 'mcpServers' key"
@@ -351,21 +354,8 @@ else
         fi
 
         if jq -e '.hooks' "$CODEX_MANIFEST" >/dev/null 2>&1; then
-            CODEX_HOOKS_TYPE=$(jq -r '.hooks | type' "$CODEX_MANIFEST" 2>/dev/null)
-            if [ "$CODEX_HOOKS_TYPE" != "string" ]; then
-                echo "ERROR: .codex-plugin/plugin.json.hooks must be a string path"
-                errors=$((errors + 1))
-            else
-                CODEX_HOOKS_PATH=$(jq -r '.hooks' "$CODEX_MANIFEST")
-                if ! validate_path_safe "$CODEX_HOOKS_PATH" "codex.hooks"; then
-                    errors=$((errors + 1))
-                elif [ ! -f "$PLUGIN_DIR/$CODEX_HOOKS_PATH" ]; then
-                    echo "ERROR: Codex hooks path does not exist: $CODEX_HOOKS_PATH"
-                    errors=$((errors + 1))
-                else
-                    echo "OK: Codex hooks path resolves: $CODEX_HOOKS_PATH"
-                fi
-            fi
+            echo "ERROR: .codex-plugin/plugin.json.hooks is unsupported; hooks.json is auto-discovered"
+            errors=$((errors + 1))
         fi
 
         if jq -e '.mcpServers' "$CODEX_MANIFEST" >/dev/null 2>&1; then
@@ -422,127 +412,6 @@ else
     fi
 fi
 
-# --- Codex marketplace (.agents/plugins/marketplace.json) ---
-
-echo ""
-echo "--- Codex marketplace ---"
-
-CODEX_MARKETPLACE="$PLUGIN_DIR/.agents/plugins/marketplace.json"
-if [ ! -f "$CODEX_MARKETPLACE" ]; then
-    echo "ERROR: .agents/plugins/marketplace.json not found"
-    errors=$((errors + 1))
-else
-    if ! jq empty "$CODEX_MARKETPLACE" 2>/dev/null; then
-        echo "ERROR: .agents/plugins/marketplace.json is not valid JSON"
-        errors=$((errors + 1))
-    else
-        echo "OK: .agents/plugins/marketplace.json is valid JSON"
-
-        # Validate name field
-        CODEX_MKT_NAME=$(jq -r '.name // empty' "$CODEX_MARKETPLACE")
-        if [ -z "$CODEX_MKT_NAME" ]; then
-            echo "ERROR: .agents/plugins/marketplace.json missing name field"
-            errors=$((errors + 1))
-        else
-            echo "OK: marketplace name = \"$CODEX_MKT_NAME\""
-        fi
-
-        if jq -e '.interface.displayName | type == "string" and length > 0' "$CODEX_MARKETPLACE" >/dev/null 2>&1; then
-            echo "OK: marketplace interface.displayName present"
-        else
-            echo "ERROR: .agents/plugins/marketplace.json.interface.displayName must be a non-empty string"
-            errors=$((errors + 1))
-        fi
-
-        # Validate plugins array
-        if ! jq -e '.plugins | type == "array" and length > 0' "$CODEX_MARKETPLACE" >/dev/null 2>&1; then
-            echo "ERROR: .agents/plugins/marketplace.json must have non-empty plugins array"
-            errors=$((errors + 1))
-        else
-            CODEX_PLUGIN_COUNT=$(jq '.plugins | length' "$CODEX_MARKETPLACE")
-            echo "OK: $CODEX_PLUGIN_COUNT plugin(s) defined"
-
-            for i in $(seq 0 $((CODEX_PLUGIN_COUNT - 1))); do
-                P_NAME=$(jq -r ".plugins[$i].name // empty" "$CODEX_MARKETPLACE")
-                P_SOURCE_TYPE=$(jq -r ".plugins[$i].source.source // empty" "$CODEX_MARKETPLACE")
-                P_SOURCE_PATH=$(jq -r ".plugins[$i].source.path // empty" "$CODEX_MARKETPLACE")
-                P_POLICY_INSTALLATION=$(jq -r ".plugins[$i].policy.installation // empty" "$CODEX_MARKETPLACE")
-                P_POLICY_AUTHENTICATION=$(jq -r ".plugins[$i].policy.authentication // empty" "$CODEX_MARKETPLACE")
-                P_CATEGORY=$(jq -r ".plugins[$i].category // empty" "$CODEX_MARKETPLACE")
-
-                if [ -z "$P_NAME" ]; then
-                    echo "ERROR: plugins[$i].name is missing"
-                    errors=$((errors + 1))
-                else
-                    echo "OK: plugins[$i].name = \"$P_NAME\""
-                fi
-
-                if [ "$P_SOURCE_TYPE" != "local" ]; then
-                    echo "ERROR: plugins[$i].source.source must be \"local\" (got: \"$P_SOURCE_TYPE\")"
-                    errors=$((errors + 1))
-                fi
-
-                if [ -z "$P_SOURCE_PATH" ]; then
-                    echo "ERROR: plugins[$i].source.path is missing"
-                    errors=$((errors + 1))
-                else
-                    # Reject absolute paths and parent traversal
-                    if [[ "$P_SOURCE_PATH" = /* ]]; then
-                        echo "ERROR: plugins[$i].source.path contains absolute path: $P_SOURCE_PATH"
-                        errors=$((errors + 1))
-                        continue
-                    fi
-                    if [[ "$P_SOURCE_PATH" == *".."* ]]; then
-                        echo "ERROR: plugins[$i].source.path contains path traversal (..): $P_SOURCE_PATH"
-                        errors=$((errors + 1))
-                        continue
-                    fi
-                    # Resolve path relative to repository root (Codex resolves relative to <root>)
-                    RESOLVED="$(cd "$REPO_ROOT/$P_SOURCE_PATH" 2>/dev/null && pwd -P)"
-                    if [ -z "$RESOLVED" ] || [ ! -d "$RESOLVED" ]; then
-                        echo "ERROR: plugins[$i].source.path does not resolve: $P_SOURCE_PATH"
-                        errors=$((errors + 1))
-                    elif [ ! -f "$RESOLVED/.codex-plugin/plugin.json" ]; then
-                        echo "ERROR: plugins[$i] missing .codex-plugin/plugin.json at resolved path"
-                        errors=$((errors + 1))
-                    else
-                        echo "OK: plugins[$i] source resolves with .codex-plugin/plugin.json"
-                    fi
-                fi
-
-                case "$P_POLICY_INSTALLATION" in
-                    NOT_AVAILABLE|AVAILABLE|INSTALLED_BY_DEFAULT)
-                        echo "OK: plugins[$i].policy.installation = \"$P_POLICY_INSTALLATION\""
-                        ;;
-                    *)
-                        echo "ERROR: plugins[$i].policy.installation must be one of NOT_AVAILABLE, AVAILABLE, INSTALLED_BY_DEFAULT"
-                        errors=$((errors + 1))
-                        ;;
-                esac
-
-                case "$P_POLICY_AUTHENTICATION" in
-                    ON_INSTALL|ON_USE)
-                        echo "OK: plugins[$i].policy.authentication = \"$P_POLICY_AUTHENTICATION\""
-                        ;;
-                    *)
-                        echo "ERROR: plugins[$i].policy.authentication must be ON_INSTALL or ON_USE"
-                        errors=$((errors + 1))
-                        ;;
-                esac
-
-                if [ -z "$P_CATEGORY" ]; then
-                    echo "ERROR: plugins[$i].category is missing"
-                    errors=$((errors + 1))
-                else
-                    echo "OK: plugins[$i].category = \"$P_CATEGORY\""
-                fi
-            done
-        fi
-    fi
-fi
-
-echo ""
-
 # --- Codex skill-installer metadata (legacy compatibility) ---
 
 echo "--- Codex legacy metadata ---"
@@ -553,6 +422,7 @@ if [ ! -f "$ROOT_OPENAI" ]; then
 elif [ -f "$PLUGIN_JSON" ] && jq -e '.skills | type == "array"' "$PLUGIN_JSON" >/dev/null 2>&1; then
     echo "OK: legacy .agents/openai.yaml exists"
     while IFS= read -r skill_path; do
+        skill_path="${skill_path%$'\r'}"
         if ! validate_path_safe "$skill_path" "skills[]"; then
             errors=$((errors + 1))
             continue

@@ -10,9 +10,9 @@
 #   plugin-name        -- Plugin to bump (default: dotnet-artisan)
 #
 # Version is propagated to:
-#   1. .claude-plugin/plugin.json       (canonical source of truth)
-#   2. .codex-plugin/plugin.json        (Codex plugin manifest)
-#   3. .claude-plugin/marketplace.json  (root, matching plugin entry)
+#   1. plugins/<name>/.claude-plugin/plugin.json       (canonical source of truth)
+#   2. plugins/<name>/.codex-plugin/plugin.json        (Codex plugin manifest)
+#   3. .claude-plugin/marketplace.json                 (root, matching plugin entry)
 #   4. .claude-plugin/marketplace.json  (metadata.version)
 #   5. README.md                        (version badge)
 #   6. CHANGELOG.md                     (promote [Unreleased], update footer links)
@@ -47,8 +47,9 @@ fi
 
 # --- Validate paths ---
 
-PLUGIN_JSON="$REPO_ROOT/.claude-plugin/plugin.json"
-CODEX_PLUGIN_JSON="$REPO_ROOT/.codex-plugin/plugin.json"
+PLUGIN_DIR="$REPO_ROOT/plugins/$PLUGIN_NAME"
+PLUGIN_JSON="$PLUGIN_DIR/.claude-plugin/plugin.json"
+CODEX_PLUGIN_JSON="$PLUGIN_DIR/.codex-plugin/plugin.json"
 ROOT_MARKETPLACE="$REPO_ROOT/.claude-plugin/marketplace.json"
 README="$REPO_ROOT/README.md"
 CHANGELOG="$REPO_ROOT/CHANGELOG.md"

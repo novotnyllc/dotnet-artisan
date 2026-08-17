@@ -1,0 +1,42 @@
+{
+  "name": "dotnet-artisan",
+  "version": "1.4.2",
+  "description": "Comprehensive .NET development skills for modern C#, ASP.NET, MAUI, Blazor, and cloud-native applications",
+  "author": {
+    "name": "Claire Novotny LLC",
+    "url": "https://github.com/novotnyllc"
+  },
+  "homepage": "https://github.com/novotnyllc/dotnet-artisan/tree/main",
+  "repository": "https://github.com/novotnyllc/dotnet-artisan",
+  "license": "MIT",
+  "keywords": [
+    "dotnet",
+    "csharp",
+    "aspnet",
+    "blazor",
+    "maui",
+    "uno-platform",
+    "efcore",
+    "native-aot",
+    "cloud-native",
+    "testing"
+  ],
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "dotnet-artisan",
+    "shortDescription": "9 .NET skills with process-first routing and domain depth",
+    "longDescription": "Comprehensive .NET development plugin providing 9 skills and 14 specialist agents covering C#, ASP.NET Core, EF Core, Blazor, MAUI, Uno Platform, testing, DevOps, debugging, and cloud-native patterns. Includes version-aware routing, coding standards, and always-loaded simplicity guidelines.",
+    "developerName": "Claire Novotny LLC",
+    "category": "Development",
+    "capabilities": [
+      "Write"
+    ],
+    "websiteURL": "https://github.com/novotnyllc/dotnet-artisan",
+    "defaultPrompt": [
+      "Help me design a .NET 9 web API architecture.",
+      "Review this ASP.NET Core app for performance and security issues.",
+      "Set up tests, CI, and release automation for this .NET repo."
+    ]
+  }
+}

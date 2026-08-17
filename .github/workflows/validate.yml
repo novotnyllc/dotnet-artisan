@@ -31,12 +31,14 @@ jobs:
         run: |
           set -euo pipefail
           echo "=== Plugin JSON Validation ==="
-          jq empty .claude-plugin/plugin.json
+          jq empty plugins/dotnet-artisan/.claude-plugin/plugin.json
           echo "OK: plugin.json"
-          jq empty hooks/hooks.json
+          jq empty plugins/dotnet-artisan/hooks.json
           echo "OK: hooks.json"
-          jq empty .mcp.json
+          jq empty plugins/dotnet-artisan/.mcp.json
           echo "OK: .mcp.json"
+          jq empty plugins/dotnet-artisan/.codex-plugin/plugin.json
+          echo "OK: Codex plugin manifest"
 
       - name: Validate root marketplace.json
         run: |
@@ -181,8 +183,12 @@ jobs:
           echo "=== Version Consistency Check ==="
 
           # Read version from plugin.json (canonical source of truth)
-          PLUGIN_VERSION=$(jq -r '.version' .claude-plugin/plugin.json)
-          echo "plugin.json version: $PLUGIN_VERSION"
+          PLUGIN_VERSION=$(jq -r '.version' plugins/dotnet-artisan/.claude-plugin/plugin.json)
+          echo "Claude plugin.json version: $PLUGIN_VERSION"
+
+          # Read version from Codex plugin manifest
+          CODEX_PLUGIN_VERSION=$(jq -r '.version' plugins/dotnet-artisan/.codex-plugin/plugin.json)
+          echo "Codex plugin.json version: $CODEX_PLUGIN_VERSION"
 
           # Read version from root marketplace.json plugin entry
           MARKETPLACE_PLUGIN_VERSION=$(jq -r '.plugins[] | select(.name == "dotnet-artisan") | .version' .claude-plugin/marketplace.json)
@@ -192,8 +198,12 @@ jobs:
           MARKETPLACE_META_VERSION=$(jq -r '.metadata.version' .claude-plugin/marketplace.json)
           echo "root marketplace.json metadata.version: $MARKETPLACE_META_VERSION"
 
-          # Compare all three
+          # Compare all version-bearing manifests
           FAIL=0
+          if [ "$PLUGIN_VERSION" != "$CODEX_PLUGIN_VERSION" ]; then
+            echo "FAIL: Claude plugin.json version ($PLUGIN_VERSION) != Codex plugin.json version ($CODEX_PLUGIN_VERSION)"
+            FAIL=1
+          fi
           if [ "$PLUGIN_VERSION" != "$MARKETPLACE_PLUGIN_VERSION" ]; then
             echo "FAIL: plugin.json version ($PLUGIN_VERSION) != root marketplace plugin version ($MARKETPLACE_PLUGIN_VERSION)"
             FAIL=1
@@ -215,8 +225,8 @@ jobs:
         run: |
           set -euo pipefail
           echo "=== Skill Count Assertion ==="
-          EXPECTED=$(jq '.skills | length' .claude-plugin/plugin.json)
-          ACTUAL=$(find skills -maxdepth 2 -name SKILL.md | wc -l | tr -d ' ')
+          EXPECTED=$(jq '.skills | length' plugins/dotnet-artisan/.claude-plugin/plugin.json)
+          ACTUAL=$(find plugins/dotnet-artisan/skills -maxdepth 2 -name SKILL.md | wc -l | tr -d ' ')
           echo "Expected: $EXPECTED"
           echo "Actual:   $ACTUAL"
           if [ "$ACTUAL" -ne "$EXPECTED" ]; then
@@ -274,6 +284,48 @@ jobs:
         run: |
           set -euo pipefail
           bash ./scripts/validate-hooks.sh
+
+  plugin-install-smoke:
+    name: Codex/Claude plugin install smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install provider CLIs
+        run: |
+          set -euo pipefail
+          npm install -g @openai/codex @anthropic-ai/claude-code
+          codex --version
+          claude --version
+
+      - name: Verify Codex plugin manifest
+        run: |
+          set -euo pipefail
+          jq -e '.name == "dotnet-artisan" and (.version | length > 0)' plugins/dotnet-artisan/.codex-plugin/plugin.json >/dev/null
+          jq -e '.skills == "./skills" and (has("hooks") | not) and .mcpServers == "./.mcp.json"' plugins/dotnet-artisan/.codex-plugin/plugin.json >/dev/null
+
+      - name: Verify Claude plugin install
+        run: |
+          set -euo pipefail
+          REPO_ROOT="$(pwd)"
+          CLAUDE_TEST_HOME="$(mktemp -d)"
+          trap 'rm -rf "$CLAUDE_TEST_HOME"' EXIT
+
+          HOME="$CLAUDE_TEST_HOME" claude plugin validate "$REPO_ROOT/plugins/dotnet-artisan"
+          HOME="$CLAUDE_TEST_HOME" claude plugin marketplace add "$REPO_ROOT"
+          HOME="$CLAUDE_TEST_HOME" claude plugin install dotnet-artisan@dotnet-artisan -s local
+          HOME="$CLAUDE_TEST_HOME" claude plugin list | tee /tmp/claude-plugin-list.txt
+
+          grep -F "dotnet-artisan@dotnet-artisan" /tmp/claude-plugin-list.txt
+          grep -F "Status:" /tmp/claude-plugin-list.txt | grep -F "enabled"
 
   # ── Job 2: .NET routing runner (runs in parallel with lint) ──
   build-test:

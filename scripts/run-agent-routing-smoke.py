@@ -33,11 +33,12 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SKILLS_DIR = REPO_ROOT / "skills"
-PLUGIN_JSON = REPO_ROOT / ".claude-plugin" / "plugin.json"
-CODEX_MANIFEST = REPO_ROOT / ".codex-plugin" / "plugin.json"
+PLUGIN_ROOT = REPO_ROOT / "plugins" / "dotnet-artisan"
+SKILLS_DIR = PLUGIN_ROOT / "skills"
+PLUGIN_JSON = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
+CODEX_MANIFEST = PLUGIN_ROOT / ".codex-plugin" / "plugin.json"
 CODEX_MARKETPLACE = REPO_ROOT / ".agents" / "plugins" / "marketplace.json"
-OPENAI_YAML = REPO_ROOT / ".agents" / "openai.yaml"
+OPENAI_YAML = PLUGIN_ROOT / ".agents" / "openai.yaml"
 
 
 def get_expected_skill_count() -> int:
@@ -125,7 +126,7 @@ def resolve_skill_path(skill_path_str: str) -> Path | None:
     """Resolve a skill path from plugin.json, rejecting unsafe values.
 
     Rejects absolute paths and traversal (.. segments).
-    Returns the resolved full path under REPO_ROOT, or None if invalid.
+    Returns the resolved full path under PLUGIN_ROOT, or None if invalid.
     """
     p = Path(skill_path_str)
 
@@ -135,9 +136,29 @@ def resolve_skill_path(skill_path_str: str) -> Path | None:
     if ".." in p.parts:
         return None
 
+    full = (PLUGIN_ROOT / p).resolve(strict=False)
+
+    # Ensure it stays under the plugin root
+    try:
+        full.relative_to(PLUGIN_ROOT.resolve())
+    except ValueError:
+        return None
+
+    return full
+
+
+def resolve_repo_path(path_str: str) -> Path | None:
+    """Resolve a marketplace path from repository root, rejecting unsafe values."""
+    p = Path(path_str)
+
+    if p.is_absolute():
+        return None
+
+    if ".." in p.parts:
+        return None
+
     full = (REPO_ROOT / p).resolve(strict=False)
 
-    # Ensure it stays under the repo root
     try:
         full.relative_to(REPO_ROOT.resolve())
     except ValueError:
@@ -266,7 +287,7 @@ def check_codex(skill_dirs: list[Path]) -> list[str]:
     - Flat layout: skill dirs at skills/<name>/ (depth 1, not depth 2)
     - Each has SKILL.md
     - .codex-plugin/plugin.json exists and matches core Claude manifest metadata
-    - .agents/plugins/marketplace.json exists and resolves to a Codex plugin root
+    - legacy .agents/plugins/marketplace.json, if present, resolves to a Codex plugin root
     - Legacy .agents/openai.yaml metadata is only validated when present
     - Skill directory count matches plugin.json
     """
@@ -385,9 +406,7 @@ def check_codex(skill_dirs: list[Path]) -> list[str]:
                         f"Codex manifest field '{field}' ({codex_value!r}) does not match Claude manifest ({claude_value!r})"
                     )
 
-    if not CODEX_MARKETPLACE.exists():
-        errors.append(f"Codex marketplace not found at {CODEX_MARKETPLACE}")
-    else:
+    if CODEX_MARKETPLACE.exists():
         try:
             codex_marketplace = json.loads(CODEX_MARKETPLACE.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
@@ -437,7 +456,7 @@ def check_codex(skill_dirs: list[Path]) -> list[str]:
                                 f"Codex marketplace plugins[{index}].source.path must be non-empty"
                             )
                         else:
-                            resolved_source = resolve_skill_path(source_path)
+                            resolved_source = resolve_repo_path(source_path)
                             if resolved_source is None:
                                 errors.append(
                                     f"Codex marketplace plugins[{index}].source.path is invalid: {source_path!r}"

@@ -6,6 +6,8 @@ REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 RUNNER="$REPO_ROOT/tests/agent-routing/check-skills.cs"
 CASES="$REPO_ROOT/tests/agent-routing/cases.json"
 CODEX_SKILLS_DIR="${CODEX_HOME:-$HOME/.codex}/skills"
+PLUGIN_ROOT="$REPO_ROOT/plugins/dotnet-artisan"
+PLUGIN_SKILLS_DIR="$PLUGIN_ROOT/skills"
 APPS_DIR="$REPO_ROOT/apps"
 PUBLIC_PLUGIN_SOURCE="novotnyllc/dotnet-artisan"
 CODEX_RESTORE_STAGING=""
@@ -179,8 +181,8 @@ prepare_codex_skills() {
         return
     fi
 
-    if [[ ! -d "$REPO_ROOT/skills" ]]; then
-        log "ERROR: skills directory not found at $REPO_ROOT/skills"
+    if [[ ! -d "$PLUGIN_SKILLS_DIR" ]]; then
+        log "ERROR: skills directory not found at $PLUGIN_SKILLS_DIR"
         return 1
     fi
 
@@ -193,11 +195,11 @@ prepare_codex_skills() {
     while IFS= read -r skill_dir; do
         [[ -f "$skill_dir/SKILL.md" ]] || continue
         skill_dirs+=("$skill_dir")
-    done < <(find "$REPO_ROOT/skills" -mindepth 1 -maxdepth 1 -type d | sort)
+    done < <(find "$PLUGIN_SKILLS_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
 
     local total_skills="${#skill_dirs[@]}"
     if (( total_skills == 0 )); then
-        log "ERROR: No skill directories found under $REPO_ROOT/skills"
+        log "ERROR: No skill directories found under $PLUGIN_SKILLS_DIR"
         return 1
     fi
 
@@ -282,7 +284,7 @@ restore_codex_skills() {
             [[ -d "$skill_dir" ]] || continue
             skill_name="$(basename "$skill_dir")"
             rm -rf -- "$CODEX_SKILLS_DIR/$skill_name"
-        done < <(find "$REPO_ROOT/skills" -mindepth 1 -maxdepth 1 -type d | sort)
+        done < <(find "$PLUGIN_SKILLS_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
 
         rm -f "$CODEX_SKILLS_DIR/.dotnet-artisan-source"
         return 0
@@ -298,7 +300,7 @@ restore_codex_skills() {
             [[ -d "$skill_dir" ]] || continue
             skill_name="$(basename "$skill_dir")"
             rm -rf -- "$CODEX_SKILLS_DIR/$skill_name"
-        done < <(find "$REPO_ROOT/skills" -mindepth 1 -maxdepth 1 -type d | sort)
+        done < <(find "$PLUGIN_SKILLS_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
 
         rm -f "$CODEX_SKILLS_DIR/.dotnet-artisan-source"
     fi

@@ -13,7 +13,7 @@ Create a working skill in five minutes using `dotnet-csharp` as a reference.
 **Step 1 -- Create the folder:**
 
 ```bash
-mkdir -p skills/dotnet-my-new-skill
+mkdir -p plugins/dotnet-artisan/skills/dotnet-my-new-skill
 ```
 
 **Step 2 -- Write the SKILL.md:**
@@ -35,7 +35,7 @@ Cross-references: See [skill:dotnet-csharp] for baseline C# conventions.
 
 **Step 3 -- Register in plugin.json:**
 
-Open `.claude-plugin/plugin.json` and add your skill path to the `skills` array:
+Open `plugins/dotnet-artisan/.claude-plugin/plugin.json` and add your skill path to the `skills` array:
 
 ```json
 "./skills/dotnet-my-new-skill"
@@ -57,10 +57,10 @@ That's it. Read on for the details behind each step.
 
 ### Folder Structure
 
-Every skill lives in a flat directory under `skills/`:
+Every skill lives in a flat directory under `plugins/dotnet-artisan/skills/`:
 
 ```
-skills/<skill-name>/
+plugins/dotnet-artisan/skills/<skill-name>/
   SKILL.md              # Required -- main skill file (casing matters)
   scripts/              # Optional -- deterministic helper CLIs
   references/           # Optional -- companion files for extended content
@@ -113,7 +113,7 @@ When a skill needs extended code examples, diagnostic tables, or deep-dive conte
 See `references/async-patterns.md` for async/await code examples and common pitfalls.
 ```
 
-This keeps the primary skill lean while making extended content available to agents that need depth. See `skills/dotnet-csharp/references/` for working examples of companion files.
+This keeps the primary skill lean while making extended content available to agents that need depth. See `plugins/dotnet-artisan/skills/dotnet-csharp/references/` for working examples of companion files.
 
 ### Copilot CLI 32-Skill Display Limit
 
@@ -129,7 +129,7 @@ GitHub Copilot CLI has a system prompt token budget that limits how many skills 
 | `user-invocable: false` | 5 | using-dotnet, dotnet-csharp, dotnet-api, dotnet-testing, dotnet-devops |
 
 **Routing strategy:** `dotnet-advisor` is the meta-router. We intentionally keep it early in **both** plausible orderings:
-- **Manifest order:** it is listed first in `.claude-plugin/plugin.json`.
+- **Manifest order:** it is listed first in `plugins/dotnet-artisan/.claude-plugin/plugin.json`.
 - **Reported alphabetical order:** its name (`dotnet-advisor`) is chosen to sort early among `dotnet-*` skills.
 
 This increases the likelihood it stays within Copilot's visible window if the ~32-skill truncation applies broadly. The advisor includes `[skill:]` cross-references to the full catalog. If Copilot supports loading skills referenced from an activated skill body, this provides a fallback path to reach skills beyond the visible window; verify this behavior with the procedure below.
@@ -451,7 +451,7 @@ The file must be named exactly `SKILL.md` (uppercase). The validation script loo
 
 If your skill is not activating in Claude Code sessions:
 
-1. Verify the skill is registered in `.claude-plugin/plugin.json`
+1. Verify the skill is registered in `plugins/dotnet-artisan/.claude-plugin/plugin.json`
 2. Check that the `description` contains clear activation triggers (see section 3)
 3. Confirm the `name` field matches the directory name
 4. Run `./scripts/validate-marketplace.sh` to verify registration
@@ -478,7 +478,7 @@ If validation reports unresolved cross-references:
 
 Before committing a new or modified skill:
 
-- [ ] **Folder created** at `skills/<skill-name>/`
+- [ ] **Folder created** at `plugins/dotnet-artisan/skills/<skill-name>/`
 - [ ] **SKILL.md** exists with correct casing
 - [ ] **Frontmatter** has `name`, `description`, `license`, and `user-invocable` fields
 - [ ] **`name` matches** the directory name exactly and satisfies `^[a-z0-9]+(-[a-z0-9]+)*$` (1-64 chars)
@@ -507,4 +507,4 @@ Before committing a new or modified skill:
 - [Agent Skills Open Standard](https://github.com/anthropics/agent-skills) -- specification for skill format and discovery
 - [CONTRIBUTING.md](CONTRIBUTING.md) -- general contribution workflow, prerequisites, and PR process
 - [CLAUDE.md](CLAUDE.md) -- plugin conventions and validation commands
-- Example skill: [`skills/dotnet-csharp/SKILL.md`](skills/dotnet-csharp/SKILL.md) -- well-structured skill with `references/` companion files
+- Example skill: [`plugins/dotnet-artisan/skills/dotnet-csharp/SKILL.md`](plugins/dotnet-artisan/skills/dotnet-csharp/SKILL.md) -- well-structured skill with `references/` companion files

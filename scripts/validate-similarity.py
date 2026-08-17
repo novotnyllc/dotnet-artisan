@@ -146,7 +146,7 @@ def collect_agent_descriptions(repo_root: Path) -> list[dict]:
 
     # Import shared parser
     try:
-        scripts_dir = repo_root / "scripts"
+        scripts_dir = Path(__file__).resolve().parent
         if str(scripts_dir) not in sys.path:
             sys.path.insert(0, str(scripts_dir))
         from _agent_frontmatter import parse_agent_frontmatter

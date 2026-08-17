@@ -26,7 +26,7 @@ This document describes the routing test system used to verify that Claude, Code
 
 - Claude: disables user-scope `dotnet-artisan`, points marketplace `dotnet-artisan` to this repo path, installs local scope plugin.
 - Copilot: repoints marketplace `dotnet-artisan` to this repo path and reinstalls/updates `dotnet-artisan@dotnet-artisan`.
-- Codex: syncs `skills/*/` from this repo into `~/.codex/skills/<skill-name>` for direct-skill test runs. Structural smoke checks separately validate `.codex-plugin/plugin.json` and `.agents/plugins/marketplace.json`.
+- Codex: syncs `plugins/dotnet-artisan/skills/*/` from this repo into `~/.codex/skills/<skill-name>` for direct-skill test runs. Structural smoke checks validate `plugins/dotnet-artisan/.codex-plugin/plugin.json`.
 - Cleanup: removes `apps/` before and after each run to avoid persisted generated app scaffolds.
 - Restore: after each run, Claude/Copilot marketplaces are restored to the public plugin source (`novotnyllc/dotnet-artisan`) and Codex skills are restored to pre-test state.
 
@@ -388,7 +388,7 @@ Copilot smoke checks remain available via `tests/copilot-smoke/run_smoke.py`, bu
 1. **Copilot CLI is installed** and `copilot --version` exits 0 (health check gate).
 2. **Plugin registration succeeds**: `copilot plugin marketplace add` + `copilot plugin install dotnet-artisan@dotnet-artisan` complete, and `copilot plugin marketplace list` contains `dotnet-artisan`.
 3. **Smoke tests produce no regressions**: Results for each deterministic case match the committed `tests/copilot-smoke/baseline.json` (status comparison, not percentage thresholds).
-4. **Evidence patterns**: Each passing case shows `Base directory for this skill:` lines in stdout/stderr containing the expected skill path under `skills/<skill-name>/`.
+4. **Evidence patterns**: Each passing case shows `Base directory for this skill:` lines in stdout/stderr containing the expected skill path under `plugins/dotnet-artisan/skills/<skill-name>/`.
 
 ### How to update baselines when intentional behavior changes
 
