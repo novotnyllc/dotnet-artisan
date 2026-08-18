@@ -48,11 +48,11 @@ Windows and Linux/macOS debugging using WinDbg MCP tools (Windows), dotnet-dump,
 - SOS commands across all platforms (WinDbg, dotnet-dump, lldb)
 - Structured diagnostic reports with stack evidence
 
-### Boundary with [skill:dotnet-tooling]
+### Boundary with `dotnet-tooling`
 
 Both skills use overlapping tools (dotnet-dump, dotnet-counters, dotnet-trace) but for different purposes:
 
-| Scenario | Use this skill (debugging) | Use [skill:dotnet-tooling] |
+| Scenario | Use this skill (debugging) | Use `dotnet-tooling` |
 |----------|---------------------------|---------------------------|
 | Investigating a crash dump (.dmp) | Yes | No |
 | "Why did my app crash/hang/OOM?" | Yes | No |
@@ -64,16 +64,16 @@ Both skills use overlapping tools (dotnet-dump, dotnet-counters, dotnet-trace) b
 | Analyzing a dump with dotnet-dump | Yes | No |
 | Decompiling an assembly to understand behavior | No | Yes (ilspy-decompile) |
 
-Rule of thumb: if something is **broken** (crash, hang, deadlock, OOM), route here. If something is **slow** or needs **optimization**, route to [skill:dotnet-tooling].
+Rule of thumb: if something is **broken** (crash, hang, deadlock, OOM), route here. If something is **slow** or needs **optimization**, route to `dotnet-tooling`.
 
 ## Out of scope
 
-- Performance profiling (dotnet-counters, dotnet-trace for optimization) -> [skill:dotnet-tooling]
-- GC tuning and managed memory optimization -> [skill:dotnet-tooling]
-- Assembly decompilation (ILSpy) -> [skill:dotnet-tooling]
-- Performance benchmarking and regression detection -> [skill:dotnet-testing]
-- Application-level logging and observability -> [skill:dotnet-devops]
-- Unit/integration test debugging -> [skill:dotnet-testing]
+- Performance profiling (dotnet-counters, dotnet-trace for optimization) -> `dotnet-tooling`
+- GC tuning and managed memory optimization -> `dotnet-tooling`
+- Assembly decompilation (ILSpy) -> `dotnet-tooling`
+- Performance benchmarking and regression detection -> `dotnet-testing`
+- Application-level logging and observability -> `dotnet-devops`
+- Unit/integration test debugging -> `dotnet-testing`
 
 ## MCP Tool Contract
 
@@ -158,7 +158,7 @@ Without correct symbols, stacks show raw addresses instead of function names.
 - Do not call it a deadlock unless lock/wait evidence supports it
 - Preserve user privacy: do not include secrets from environment blocks in reports
 
-Cross-references: [skill:dotnet-tooling] for .NET SDK diagnostic tools (`references/profiling.md`) and GC/memory tuning (`references/gc-memory.md`).
+Cross-references: `dotnet-tooling` for .NET SDK diagnostic tools (`references/profiling.md`) and GC/memory tuning (`references/gc-memory.md`).
 
 ## References
 

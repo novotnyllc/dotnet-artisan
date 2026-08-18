@@ -50,10 +50,10 @@ user-invocable: false
 
 ## Out of scope
 
-- Server-side auth middleware and API security configuration -- see [skill:dotnet-api]
-- Non-UI testing strategy (unit, integration, E2E architecture) -- see [skill:dotnet-testing]
-- Cross-framework UI test patterns (page objects, selectors) -- see [skill:dotnet-testing]
-- Playwright browser automation (non-framework-specific) -- see [skill:dotnet-testing]
-- Backend API patterns and architecture -- see [skill:dotnet-api]
-- Native AOT compilation (non-MAUI) -- see [skill:dotnet-tooling]
-- Console UI (Terminal.Gui, Spectre.Console) -- see [skill:dotnet-tooling]
+- Server-side auth middleware and API security configuration -- see `dotnet-api`
+- Non-UI testing strategy (unit, integration, E2E architecture) -- see `dotnet-testing`
+- Cross-framework UI test patterns (page objects, selectors) -- see `dotnet-testing`
+- Playwright browser automation (non-framework-specific) -- see `dotnet-testing`
+- Backend API patterns and architecture -- see `dotnet-api`
+- Native AOT compilation (non-MAUI) -- see `dotnet-tooling`
+- Console UI (Terminal.Gui, Spectre.Console) -- see `dotnet-tooling`

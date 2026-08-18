@@ -67,12 +67,12 @@ user-invocable: false
 
 ## Out of scope
 
-- Crash dump analysis, hang/deadlock triage, live debugger attach -> [skill:dotnet-debugging]
-- Web API patterns -> [skill:dotnet-api]
-- Test authoring -> [skill:dotnet-testing]
-- CI/CD pipelines -> [skill:dotnet-devops]
-- C# language patterns -> [skill:dotnet-csharp]
-- UI framework development -> [skill:dotnet-ui]
+- Crash dump analysis, hang/deadlock triage, live debugger attach -> `dotnet-debugging`
+- Web API patterns -> `dotnet-api`
+- Test authoring -> `dotnet-testing`
+- CI/CD pipelines -> `dotnet-devops`
+- C# language patterns -> `dotnet-csharp`
+- UI framework development -> `dotnet-ui`
 
 ## Scripts
 

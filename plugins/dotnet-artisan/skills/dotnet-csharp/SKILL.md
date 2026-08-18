@@ -67,8 +67,8 @@ Load these when the topic matches (see Routing Table keywords):
 
 ## Out of scope
 
-- ASP.NET Core / web API patterns (request-level validation, endpoint filters) -> [skill:dotnet-api]
-- UI framework patterns -> [skill:dotnet-ui]
-- Testing patterns -> [skill:dotnet-testing]
-- Build/MSBuild/project setup -> [skill:dotnet-tooling]
-- Performance profiling tools -> [skill:dotnet-tooling]
+- ASP.NET Core / web API patterns (request-level validation, endpoint filters) -> `dotnet-api`
+- UI framework patterns -> `dotnet-ui`
+- Testing patterns -> `dotnet-testing`
+- Build/MSBuild/project setup -> `dotnet-tooling`
+- Performance profiling tools -> `dotnet-tooling`

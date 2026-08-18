@@ -1,6 +1,6 @@
 ---
 name: using-dotnet
-description: Detects .NET intent for any C#, ASP.NET Core, EF Core, Blazor, MAUI, Uno Platform, WPF, WinUI, SignalR, gRPC, xUnit, NuGet, or MSBuild request from prompt keywords and repository signals (.sln, .csproj, global.json, .cs files). First skill to invoke for all .NET work — loads version-specific coding standards and routes to domain skills via [skill:dotnet-advisor] before any planning or implementation. Do not use for clearly non-.NET tasks (Python, JavaScript, Go, Rust, Java).
+description: Detects .NET intent for any C#, ASP.NET Core, EF Core, Blazor, MAUI, Uno Platform, WPF, WinUI, SignalR, gRPC, xUnit, NuGet, or MSBuild request from prompt keywords and repository signals (.sln, .csproj, global.json, .cs files). First skill to invoke for all .NET work — loads version-specific coding standards and routes to domain skills via `dotnet-advisor` before any planning or implementation. Do not use for clearly non-.NET tasks (Python, JavaScript, Go, Rust, Java).
 license: MIT
 user-invocable: false
 ---
@@ -11,14 +11,14 @@ user-invocable: false
 
 - Establishing .NET/C# routing discipline before clarifying questions, planning, command execution, or edits.
 - Detecting .NET intent from prompt and repository signals (`.sln`, `.slnx`, `.csproj`, `global.json`, `.cs`).
-- Enforcing first-step routing through [skill:dotnet-advisor] and baseline loading order.
+- Enforcing first-step routing through `dotnet-advisor` and baseline loading order.
 - Defining priority and rigidity rules for downstream skill invocation.
 
 ## Out of scope
 
-- C# implementation details and coding-standard specifics -> [skill:dotnet-csharp]
-- Deep domain implementation patterns -> [skill:dotnet-api], [skill:dotnet-ui], [skill:dotnet-testing], [skill:dotnet-devops], [skill:dotnet-tooling], [skill:dotnet-debugging]
-- Specialist deep-review workflows -> [skill:dotnet-security-reviewer], [skill:dotnet-performance-analyst], [skill:dotnet-testing-specialist]
+- C# implementation details and coding-standard specifics -> `dotnet-csharp`
+- Deep domain implementation patterns -> `dotnet-api`, `dotnet-ui`, `dotnet-testing`, `dotnet-devops`, `dotnet-tooling`, `dotnet-debugging`
+- Specialist deep-review workflows -> `dotnet-security-reviewer`, `dotnet-performance-analyst`, `dotnet-testing-specialist`
 
 ## Simplicity First (KISS)
 
@@ -51,10 +51,36 @@ When a request likely involves .NET or C#, follow this sequence before any other
 
 1. **Detect .NET intent** — Look for prompt keywords (C#, .NET, ASP.NET, EF Core, Blazor, MAUI, NuGet, csproj) or repository signals (`.sln`, `.slnx`, `.csproj`, `global.json`, `.cs` files). If either is present, continue.
 2. **In a .NET repository, .NET is the default** — When repo signals are present, ambiguous requests like "build me a web app", "add a dashboard", "write a script", or "create a spreadsheet" should use .NET solutions (ASP.NET Core, Blazor, .NET file-based apps, Open XML SDK) rather than defaulting to JavaScript/Python. The user chose a .NET project for a reason.
-3. **Check SDK availability** — If `dotnet --version` fails and no `DOTNET_ROOT` is set, install the SDK before proceeding. This takes under a minute with no privileges required. See [skill:dotnet-tooling] `references/dotnet-sdk-install.md` for the full install script reference, or use this one-liner: `curl -sSL https://dot.net/v1/dotnet-install.sh | bash && export DOTNET_ROOT="$HOME/.dotnet" && export PATH="$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools"`. Do not treat a missing SDK as a blocker — install it and continue.
-4. **Invoke [skill:dotnet-advisor]** — This routes the request to the correct domain skills and loads coding standards.
-5. **Follow advisor routing** — Load [skill:dotnet-csharp] baseline, then the domain skill(s) the advisor selects.
+3. **Check SDK availability** — If `dotnet --version` fails and no `DOTNET_ROOT` is set, install the SDK before proceeding. This takes under a minute with no privileges required. See `dotnet-tooling`'s `references/dotnet-sdk-install.md` for the full install script reference, or use this one-liner: `curl -sSL https://dot.net/v1/dotnet-install.sh | bash && export DOTNET_ROOT="$HOME/.dotnet" && export PATH="$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools"`. Do not treat a missing SDK as a blocker — install it and continue.
+4. **Load `dotnet-advisor`** — see "Loading another skill" below for how. It routes the request to the correct domain skills and loads coding standards.
+5. **Follow advisor routing** — load the `dotnet-csharp` baseline the same way, then the domain skill(s) the advisor selects.
 6. **Now respond** — Clarify, plan, explore, or implement with the right context loaded.
+
+## Loading another skill
+
+``name`` is descriptive text, not an invocation. Codex collects explicit
+skills from the ORIGINAL turn input before a router skill is injected, and does
+not rescan injected text for nested mentions — so naming a skill inside this
+file loads nothing on its own. Say what you actually did; never report a skill
+as invoked because you named it.
+
+Load one of these two ways, in order:
+
+1. **Native invocation, where the host offers it.** In Claude Code that is the
+   `Skill` tool with the qualified name, e.g. `dotnet-artisan:dotnet-api`. This
+   preserves the skill's metadata, policy and dependencies, so prefer it
+   whenever it is available.
+2. **Read the file, where it is not.** Every skill in this plugin is a sibling
+   directory, so the target is always `../<skill-name>/SKILL.md` relative to
+   this file. Read it and follow it as if it had been injected.
+
+The relative path is deliberate: it resolves without a catalog lookup, so it
+still works when the skill is installed and enabled but sits beyond the
+truncated model-visible catalog — the case where a name-based search silently
+finds nothing.
+
+If neither path works, say the skill could not be loaded and continue without
+it. Do not proceed as though its guidance were in context.
 
 ## Prefer File-Based Apps for Scripts and Utilities
 
@@ -66,7 +92,7 @@ For quick scripts, utilities, prototypes, and single-file tools, prefer .NET 10 
 - Enable native AOT publish by default
 - Work as Unix shebangs (`#!/usr/bin/env dotnet`)
 
-When the user asks to "write a script", "make a quick tool", "create a utility", or any small single-purpose program, default to a file-based app unless the task clearly needs multiple source files or test projects. See [skill:dotnet-api] `references/file-based-apps.md` for the full directive and CLI reference.
+When the user asks to "write a script", "make a quick tool", "create a utility", or any small single-purpose program, default to a file-based app unless the task clearly needs multiple source files or test projects. See `dotnet-api` `references/file-based-apps.md` for the full directive and CLI reference.
 
 ```csharp
 // Example: a file-based ASP.NET Core API
@@ -91,14 +117,14 @@ Routing applies even for "simple" questions and clarification requests. The skil
 
 When multiple skills could apply, use this order:
 
-1. **Process skills first**: this skill, then [skill:dotnet-advisor].
-2. **Baseline skill second**: [skill:dotnet-csharp] for any code path.
-3. **Domain skills third**: [skill:dotnet-api], [skill:dotnet-ui], [skill:dotnet-testing], [skill:dotnet-devops], [skill:dotnet-tooling], [skill:dotnet-debugging].
+1. **Process skills first**: this skill, then `dotnet-advisor`.
+2. **Baseline skill second**: `dotnet-csharp` for any code path.
+3. **Domain skills third**: `dotnet-api`, `dotnet-ui`, `dotnet-testing`, `dotnet-devops`, `dotnet-tooling`, `dotnet-debugging`.
 4. **Specialist agents fourth**: use only when deeper analysis is required after routing.
 
 ## Skill Types
 
-**Rigid** (must follow exactly): this skill, [skill:dotnet-advisor], and baseline-first ordering.
+**Rigid** (must follow exactly): this skill, `dotnet-advisor`, and baseline-first ordering.
 
 **Flexible** (adapt to context): Domain skills and their companion references.
 

@@ -47,6 +47,6 @@ Most-shared companion: `references/xunit.md` covers xUnit v3 framework features 
 
 ## Out of scope
 
-- UI framework-specific testing (bUnit, Appium) -> [skill:dotnet-ui]
-- CI/CD pipeline configuration -> [skill:dotnet-devops]
-- Performance profiling -> [skill:dotnet-tooling]
+- UI framework-specific testing (bUnit, Appium) -> `dotnet-ui`
+- CI/CD pipeline configuration -> `dotnet-devops`
+- Performance profiling -> `dotnet-tooling`
