@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/novotnyllc/dotnet-artisan/actions/workflows/validate.yml/badge.svg)](https://github.com/novotnyllc/dotnet-artisan/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.2-green.svg)](plugins/dotnet-artisan/.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-1.5.0-green.svg)](plugins/dotnet-artisan/.claude-plugin/plugin.json)
 
 ## Overview
 

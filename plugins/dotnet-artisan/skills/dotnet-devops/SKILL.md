@@ -46,6 +46,6 @@ CI/CD, packaging, release management, and operational tooling for .NET. This con
 
 ## Out of scope
 
-- API/backend code patterns -> [skill:dotnet-api]
-- Build system authoring -> [skill:dotnet-tooling]
-- Test authoring -> [skill:dotnet-testing]
+- API/backend code patterns -> `dotnet-api`
+- Build system authoring -> `dotnet-tooling`
+- Test authoring -> `dotnet-testing`

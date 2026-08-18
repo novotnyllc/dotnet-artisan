@@ -64,8 +64,8 @@ Most-shared companion: `references/architecture-patterns.md` covers vertical sli
 
 ## Out of scope
 
-- C# language features -> [skill:dotnet-csharp]
-- UI rendering -> [skill:dotnet-ui]
-- Test authoring -> [skill:dotnet-testing]
-- CI/CD pipelines -> [skill:dotnet-devops]
-- Build tooling -> [skill:dotnet-tooling]
+- C# language features -> `dotnet-csharp`
+- UI rendering -> `dotnet-ui`
+- Test authoring -> `dotnet-testing`
+- CI/CD pipelines -> `dotnet-devops`
+- Build tooling -> `dotnet-tooling`

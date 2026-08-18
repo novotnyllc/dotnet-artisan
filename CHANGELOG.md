@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-08-17
+
+### Added
+
+- **Resilient skill invocation workflow** -- `using-dotnet` and `dotnet-advisor` now document a two-step loading model (native skill invocation first, then direct `SKILL.md` fallback) so domain guidance loads reliably even when catalog-based skill discovery is incomplete.
+- **Secure API documentation defaults** -- API guidance now positions OpenAPI/Swagger/Scalar endpoint exposure behind development-environment checks, reducing accidental exposure of interactive API docs in non-development deployments.
+- **Safety-first secrets guidance** -- secret examples in API reference docs now use explicit placeholders instead of concrete-looking values, helping users avoid copying sensitive-looking configuration into examples.
+
+### Changed
+
+- **Routing documentation clarity** -- skill references and handoff wording were standardized to explicit skill-name conventions, making cross-skill delegation behavior easier to follow and less ambiguous for users following the .NET plugin workflow.
+- **Container deployment security defaults** -- deployment guidance now explicitly warns to use `Production` in deployed environments and calls out the risk of exposing detailed errors and stack traces in development mode.
+
+### Fixed
+
+- **Removed ambiguity around skill names being treated as commands** -- guidance now states clearly that skill names in text are descriptive, and only explicit native invocation or direct skill-file loading counts as actually loading a skill.
+
 ## [1.4.2] - 2026-08-02
 
 ### Fixed
@@ -248,7 +265,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README with skill catalog, Mermaid architecture diagrams, and cross-agent documentation
 - CONTRIBUTING guide with skill authoring conventions and PR process
 
-[unreleased]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.4.2...HEAD
+[unreleased]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.5.0...HEAD
+[1.5.0]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.4.2...dotnet-artisan/v1.5.0
 [1.4.2]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.4.1...dotnet-artisan/v1.4.2
 [1.4.1]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.4.0...dotnet-artisan/v1.4.1
 [1.4.0]: https://github.com/novotnyllc/dotnet-artisan/compare/dotnet-artisan/v1.3.0...dotnet-artisan/v1.4.0

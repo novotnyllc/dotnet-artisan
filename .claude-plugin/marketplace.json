@@ -8,14 +8,14 @@
   },
   "metadata": {
     "description": "Marketplace metadata for the dotnet-artisan plugin",
-    "version": "1.4.2"
+    "version": "1.5.0"
   },
   "plugins": [
     {
       "name": "dotnet-artisan",
       "source": "./plugins/dotnet-artisan",
       "description": "Comprehensive .NET development skills for modern C# and .NET",
-      "version": "1.4.2",
+      "version": "1.5.0",
       "author": {
         "name": "Claire Novotny",
         "url": "https://github.com/novotnyllc"
