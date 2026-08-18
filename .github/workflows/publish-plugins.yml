@@ -1,0 +1,431 @@
+name: Publish Plugin to Marketplaces
+
+# Automated publishing pipeline for dotnet-artisan plugin.
+#
+# Triggers:
+#   1. release:published  -- Full publish: validate, build artifacts, attach to
+#      release, verify. Fires after auto-tag.yml creates a GitHub Release.
+#   2. push (path-filtered) -- Validation-only: runs cross-provider checks when
+#      plugin metadata changes on main WITHOUT a version bump. No publish step.
+#   3. workflow_dispatch   -- Manual re-publish / re-verification of a version.
+#
+# Relationship with auto-tag.yml:
+#   auto-tag.yml detects version bumps on main and creates the git tag + GitHub
+#   Release. This workflow picks up the release event and handles the
+#   marketplace-specific publishing (artifact generation, cross-provider
+#   verification, install-proof checks, publish summary).
+
+on:
+  release:
+    types: [published]
+
+  push:
+    branches: [main]
+    paths:
+      - '.claude-plugin/**'
+      - '.codex-plugin/**'
+      - '.agents/plugins/**'
+      - 'skills/**/SKILL.md'
+      - 'agents/*.md'
+      - 'hooks/**'
+      - '.mcp.json'
+
+  workflow_dispatch:
+    inputs:
+      version_override:
+        description: 'Version to publish (reads from plugin.json if empty)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-marketplace-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ── Job 1: Detect version and determine publish intent ──────────────────────
+  detect:
+    name: Detect version and publish intent
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      is_release: ${{ steps.meta.outputs.is_release }}
+      should_publish: ${{ steps.meta.outputs.should_publish }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read plugin metadata and determine intent
+        id: meta
+        run: |
+          set -euo pipefail
+
+          # Determine version: workflow_dispatch override > release tag > plugin.json
+          if [ -n "${{ inputs.version_override }}" ]; then
+            VERSION="${{ inputs.version_override }}"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            # Extract version from tag: dotnet-artisan/v1.2.3 -> 1.2.3
+            TAG_NAME="${{ github.event.release.tag_name }}"
+            VERSION="${TAG_NAME#dotnet-artisan/v}"
+          else
+            VERSION=$(jq -r '.version' .claude-plugin/plugin.json)
+          fi
+
+          TAG="dotnet-artisan/v${VERSION}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          # Determine if this is a release event (full publish) or push (validate-only)
+          IS_RELEASE="false"
+          SHOULD_PUBLISH="false"
+
+          if [ "${{ github.event_name }}" = "release" ]; then
+            IS_RELEASE="true"
+            SHOULD_PUBLISH="true"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SHOULD_PUBLISH="true"
+          fi
+
+          echo "is_release=$IS_RELEASE" >> "$GITHUB_OUTPUT"
+          echo "should_publish=$SHOULD_PUBLISH" >> "$GITHUB_OUTPUT"
+
+          echo "--- Detect Summary ---"
+          echo "Version:        $VERSION"
+          echo "Tag:            $TAG"
+          echo "Event:          ${{ github.event_name }}"
+          echo "Is release:     $IS_RELEASE"
+          echo "Should publish: $SHOULD_PUBLISH"
+
+  # ── Job 2: Cross-provider validation ────────────────────────────────────────
+  validate:
+    name: Cross-provider validation
+    needs: [detect]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Claude plugin manifest
+        run: ./scripts/validate-root-marketplace.sh
+
+      - name: Validate skill structure
+        run: ./scripts/validate-skills.sh
+
+      - name: Validate all marketplace manifests
+        run: ./scripts/validate-marketplace.sh
+
+      - name: Cross-provider structural smoke tests
+        run: python3 ./scripts/run-agent-routing-smoke.py --provider claude,codex,copilot
+
+      - name: Validate version consistency across providers
+        run: |
+          set -euo pipefail
+          echo "=== Cross-Provider Version Consistency ==="
+
+          CLAUDE_VER=$(jq -r '.version' .claude-plugin/plugin.json)
+          CODEX_VER=$(jq -r '.version' .codex-plugin/plugin.json)
+          MKT_PLUGIN_VER=$(jq -r '.plugins[] | select(.name == "dotnet-artisan") | .version' .claude-plugin/marketplace.json)
+          MKT_META_VER=$(jq -r '.metadata.version' .claude-plugin/marketplace.json)
+
+          echo "Claude plugin.json:              $CLAUDE_VER"
+          echo "Codex plugin.json:               $CODEX_VER"
+          echo "Claude marketplace plugin entry: $MKT_PLUGIN_VER"
+          echo "Claude marketplace metadata:     $MKT_META_VER"
+
+          FAIL=0
+          if [ "$CLAUDE_VER" != "$CODEX_VER" ]; then
+            echo "FAIL: Claude ($CLAUDE_VER) != Codex ($CODEX_VER)"
+            FAIL=1
+          fi
+          if [ "$CLAUDE_VER" != "$MKT_PLUGIN_VER" ]; then
+            echo "FAIL: Claude ($CLAUDE_VER) != marketplace plugin entry ($MKT_PLUGIN_VER)"
+            FAIL=1
+          fi
+          if [ "$CLAUDE_VER" != "$MKT_META_VER" ]; then
+            echo "FAIL: Claude ($CLAUDE_VER) != marketplace metadata ($MKT_META_VER)"
+            FAIL=1
+          fi
+
+          if [ "$FAIL" -eq 1 ]; then
+            echo ""
+            echo "Version mismatch. Run ./scripts/bump.sh to sync all version locations."
+            exit 1
+          fi
+
+          echo "OK: All provider versions consistent ($CLAUDE_VER)"
+
+  # ── Job 3: Build marketplace artifacts ──────────────────────────────────────
+  build-artifacts:
+    name: Build marketplace artifacts
+    needs: [detect, validate]
+    if: needs.detect.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build per-provider artifacts
+        run: ./scripts/build-marketplace-artifacts.sh "${{ needs.detect.outputs.version }}"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-artifacts-v${{ needs.detect.outputs.version }}
+          path: artifacts/
+          retention-days: 90
+
+  # ── Job 4: Attach artifacts to GitHub Release ───────────────────────────────
+  attach-release-assets:
+    name: Attach artifacts to release
+    needs: [detect, build-artifacts]
+    if: needs.detect.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: marketplace-artifacts-v${{ needs.detect.outputs.version }}
+          path: artifacts/
+
+      - name: Attach to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ needs.detect.outputs.tag }}"
+
+          echo "Attaching marketplace artifacts to release $TAG ..."
+
+          shopt -s nullglob
+          files=(artifacts/*.json)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "no artifacts to attach - the build step produced nothing" >&2
+            exit 1
+          fi
+
+          for file in "${files[@]}"; do
+            echo "  Uploading $(basename "$file") ..."
+            # Let a failure fail. Swallowing it into a warning meant every real
+            # failure mode - missing tag, bad credentials, network - still
+            # produced a green publish that attached nothing, and a green check
+            # is exactly what people trust. --clobber already makes "it exists"
+            # a non-error, so there is no benign case left to tolerate.
+            gh release upload "$TAG" "$file" --repo "${{ github.repository }}" --clobber
+          done
+          echo "Done."
+
+  # ── Job 5: Post-publish verification ────────────────────────────────────────
+  verify:
+    name: Post-publish verification
+    needs: [detect, build-artifacts]
+    if: needs.detect.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Claude marketplace discoverability
+        run: |
+          set -euo pipefail
+          echo "=== Claude Code Marketplace ==="
+
+          # Plugin manifest must have required fields
+          jq -e '.name and .version and .skills and .agents' .claude-plugin/plugin.json > /dev/null
+          echo "OK: plugin.json has name, version, skills, agents"
+
+          # Marketplace must list the plugin with source resolution
+          jq -e '.plugins[] | select(.name == "dotnet-artisan") | .source and .version' .claude-plugin/marketplace.json > /dev/null
+          echo "OK: marketplace.json lists dotnet-artisan with source and version"
+
+          # Enrichment fields present
+          for field in author homepage repository license keywords; do
+            if jq -e ".$field" .claude-plugin/plugin.json > /dev/null 2>&1; then
+              echo "OK: plugin.json.$field present"
+            else
+              echo "WARN: plugin.json.$field missing"
+            fi
+          done
+
+      - name: Verify Codex marketplace discoverability
+        run: |
+          set -euo pipefail
+          echo "=== OpenAI Codex Marketplace ==="
+
+          # Codex plugin manifest
+          jq -e '.name and .version and .skills' .codex-plugin/plugin.json > /dev/null
+          echo "OK: .codex-plugin/plugin.json has name, version, skills"
+
+          # Interface metadata for Codex surface
+          jq -e '.interface.displayName' .codex-plugin/plugin.json > /dev/null
+          echo "OK: .codex-plugin/plugin.json has interface.displayName"
+
+          # Codex marketplace discovery
+          jq -e '.plugins[0].name and .plugins[0].source' .agents/plugins/marketplace.json > /dev/null
+          echo "OK: .agents/plugins/marketplace.json lists plugin with source"
+
+          # Skills directory resolves
+          CODEX_SKILLS=$(jq -r '.skills' .codex-plugin/plugin.json)
+          if [ -d "$CODEX_SKILLS" ]; then
+            echo "OK: Codex skills path '$CODEX_SKILLS' exists"
+          else
+            echo "FAIL: Codex skills path '$CODEX_SKILLS' not found"
+            exit 1
+          fi
+
+      - name: Verify Copilot CLI compatibility
+        run: |
+          set -euo pipefail
+          echo "=== GitHub Copilot CLI ==="
+
+          # Flat skill layout: each skill dir must exist with SKILL.md
+          SKILL_COUNT=$(find skills -maxdepth 2 -name SKILL.md | wc -l | tr -d ' ')
+          EXPECTED=$(jq '.skills | length' .claude-plugin/plugin.json)
+
+          if [ "$SKILL_COUNT" -ne "$EXPECTED" ]; then
+            echo "FAIL: Skill count mismatch (expected $EXPECTED, found $SKILL_COUNT)"
+            exit 1
+          fi
+          echo "OK: Skill count matches ($SKILL_COUNT)"
+
+          # Copilot requires license field in every SKILL.md
+          MISSING_LICENSE=0
+          for skill_md in skills/*/SKILL.md; do
+            if ! grep -q '^license:' "$skill_md"; then
+              echo "FAIL: Missing license in $skill_md"
+              MISSING_LICENSE=$((MISSING_LICENSE + 1))
+            fi
+          done
+
+          if [ "$MISSING_LICENSE" -gt 0 ]; then
+            echo "FAIL: $MISSING_LICENSE skill(s) missing license field"
+            exit 1
+          fi
+          echo "OK: All skills have license field"
+
+          # Flat layout: no nested skill directories (Copilot scans one level deep)
+          NESTED=$(find skills -mindepth 2 -maxdepth 2 -type d -not -name references | wc -l | tr -d ' ')
+          if [ "$NESTED" -gt 0 ]; then
+            echo "WARN: $NESTED nested skill directories found (Copilot scans one-level-deep)"
+          else
+            echo "OK: Flat skill layout verified"
+          fi
+
+      - name: Version matches across all providers
+        run: |
+          set -euo pipefail
+          EXPECTED="${{ needs.detect.outputs.version }}"
+
+          CLAUDE=$(jq -r '.version' .claude-plugin/plugin.json)
+          CODEX=$(jq -r '.version' .codex-plugin/plugin.json)
+
+          FAIL=0
+          if [ "$CLAUDE" != "$EXPECTED" ]; then
+            echo "FAIL: Claude version ($CLAUDE) != expected ($EXPECTED)"
+            FAIL=1
+          fi
+          if [ "$CODEX" != "$EXPECTED" ]; then
+            echo "FAIL: Codex version ($CODEX) != expected ($EXPECTED)"
+            FAIL=1
+          fi
+
+          if [ "$FAIL" -eq 1 ]; then
+            exit 1
+          fi
+          echo "OK: All provider versions match ($EXPECTED)"
+
+  # ── Job 6: Publish summary ─────────────────────────────────────────────────
+  summary:
+    name: Publish summary
+    needs: [detect, validate, build-artifacts, attach-release-assets, verify]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Write job summary
+        run: |
+          VERSION="${{ needs.detect.outputs.version }}"
+          TAG="${{ needs.detect.outputs.tag }}"
+          SHOULD_PUBLISH="${{ needs.detect.outputs.should_publish }}"
+          EVENT="${{ github.event_name }}"
+
+          {
+            echo "## Plugin Marketplace Publish Results"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Version | \`$VERSION\` |"
+            echo "| Tag | \`$TAG\` |"
+            echo "| Trigger | \`$EVENT\` |"
+            echo "| Published | $SHOULD_PUBLISH |"
+            echo ""
+            echo "### Job Results"
+            echo ""
+            echo "| Job | Status |"
+            echo "|-----|--------|"
+            echo "| Detect | ${{ needs.detect.result }} |"
+            echo "| Validate | ${{ needs.validate.result }} |"
+            echo "| Build artifacts | ${{ needs.build-artifacts.result }} |"
+            echo "| Attach to release | ${{ needs.attach-release-assets.result }} |"
+            echo "| Verify | ${{ needs.verify.result }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$SHOULD_PUBLISH" = "true" ]; then
+            {
+              echo ""
+              echo "### Marketplace Status"
+              echo ""
+              echo "| Provider | Manifest | Discovery | Status |"
+              echo "|----------|----------|-----------|--------|"
+              echo "| Claude Code | \`.claude-plugin/plugin.json\` | GitHub Release | Published |"
+              echo "| Claude Marketplace | \`.claude-plugin/marketplace.json\` | GitHub Release | Published |"
+              echo "| OpenAI Codex | \`.codex-plugin/plugin.json\` | Repo manifest | Published |"
+              echo "| Codex Discovery | \`.agents/plugins/marketplace.json\` | Repo manifest | Published |"
+              echo "| GitHub Copilot CLI | \`.claude-plugin/plugin.json\` | GitHub Release | Published |"
+              echo ""
+              echo "### Install Commands"
+              echo ""
+              echo "**Claude Code:**"
+              echo "\`\`\`"
+              echo "/plugin marketplace add novotnyllc/dotnet-artisan"
+              echo "/plugin install dotnet-artisan@dotnet-artisan"
+              echo "\`\`\`"
+              echo ""
+              echo "**GitHub Copilot CLI:**"
+              echo "\`\`\`"
+              echo "copilot plugin marketplace add novotnyllc/dotnet-artisan"
+              echo "copilot plugin install dotnet-artisan@dotnet-artisan"
+              echo "\`\`\`"
+              echo ""
+              echo "**OpenAI Codex:**"
+              echo "\`\`\`"
+              echo "\$skill-installer install https://github.com/novotnyllc/dotnet-artisan"
+              echo "\`\`\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo ""
+              echo "### Validation Only"
+              echo ""
+              echo "This run validated plugin metadata consistency across all providers."
+              echo "No publish was triggered (push event without a new release)."
+              echo "To publish, bump the version with \`./scripts/bump.sh\` and merge to main."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
