@@ -210,11 +210,22 @@ jobs:
           TAG="${{ needs.detect.outputs.tag }}"
 
           echo "Attaching marketplace artifacts to release $TAG ..."
-          for file in artifacts/*.json; do
+
+          shopt -s nullglob
+          files=(artifacts/*.json)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "no artifacts to attach - the build step produced nothing" >&2
+            exit 1
+          fi
+
+          for file in "${files[@]}"; do
             echo "  Uploading $(basename "$file") ..."
-            gh release upload "$TAG" "$file" --repo "${{ github.repository }}" --clobber || {
-              echo "  WARN: Failed to upload $(basename "$file") (may already exist)"
-            }
+            # Let a failure fail. Swallowing it into a warning meant every real
+            # failure mode - missing tag, bad credentials, network - still
+            # produced a green publish that attached nothing, and a green check
+            # is exactly what people trust. --clobber already makes "it exists"
+            # a non-error, so there is no benign case left to tolerate.
+            gh release upload "$TAG" "$file" --repo "${{ github.repository }}" --clobber
           done
           echo "Done."
 
@@ -353,7 +364,6 @@ jobs:
           VERSION="${{ needs.detect.outputs.version }}"
           TAG="${{ needs.detect.outputs.tag }}"
           SHOULD_PUBLISH="${{ needs.detect.outputs.should_publish }}"
-          IS_RELEASE="${{ needs.detect.outputs.is_release }}"
           EVENT="${{ github.event_name }}"
 
           {
