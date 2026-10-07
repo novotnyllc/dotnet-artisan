@@ -107,3 +107,7 @@ Run both in sequence:
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and PR process
 - See [CONTRIBUTING-SKILLS.md](CONTRIBUTING-SKILLS.md) for the comprehensive skill authoring how-to manual
 - See [README.md](README.md) for the full skill catalog, architecture diagrams, and installation instructions
+
+## Merging
+
+PRs land through the Mergify merge queue (`.mergify.yml`), squashed into one commit on `main` titled and described by the PR; merge commits and rebase merges are turned off. Do not merge by hand. Mergify queues a PR once it is not a draft, its required checks are green, every review thread is resolved, and it is authored by clairernovotny or approved by someone with write access. Add the `do-not-merge` label to hold one back.
