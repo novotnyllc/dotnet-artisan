@@ -7,8 +7,8 @@
 # Only a maintainer can let a PR in: it must be authored by clairernovotny or
 # approved by someone with write access (Mergify ignores other approvals).
 # Pull requests from anyone else, bots included, wait for that approval, and
-# a new push by anyone but clairernovotny dismisses earlier approvals, so
-# only reviewed code can land. Checks are pinned to the app that posts them.
+# any new push dismisses earlier approvals, so only reviewed code can land.
+# Checks are pinned to the app that posts them.
 
 shared:
   ci_checks: &ci_checks
@@ -29,10 +29,9 @@ shared:
 
 pull_request_rules:
   # Mergify's own branch updates do not trigger this, only new commits.
-  - name: Dismiss approvals when someone else pushes new commits
+  - name: Dismiss approvals when new commits are pushed
     conditions:
       - base = main
-      - -author = clairernovotny
     actions:
       dismiss_reviews:
         approved: true
