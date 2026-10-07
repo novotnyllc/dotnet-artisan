@@ -1,0 +1,48 @@
+# Mergify: the same merge flow as Claire's other repos. A PR lands through
+# the merge queue, squashed into one commit on main titled and described by
+# the PR. The main ruleset requires the `Mergify Merge Protections` check, so
+# every merge goes through the rules below, and a PR is queued as soon as it
+# is ready. Add the `do-not-merge` label to hold one back.
+#
+# Only a maintainer can let a PR in: it must be authored by clairernovotny or
+# approved by someone with write access (Mergify ignores other approvals).
+# Pull requests from anyone else, bots included, wait for that approval.
+
+shared:
+  ci_checks: &ci_checks
+    - check-success = Lint & validate structure
+    - check-success = Build & test routing runner
+  ready_conditions: &ready_conditions
+    - and: *ci_checks
+    - or:
+        - author = clairernovotny
+        - "#approved-reviews-by >= 1"
+    - "#changes-requested-reviews-by = 0"
+    - "#review-threads-unresolved = 0"
+    - -label = do-not-merge
+
+merge_protections:
+  - name: Ready to land on main
+    description: CI green, authored or approved by a maintainer, review threads resolved, not held.
+    if:
+      - base = main
+    success_conditions: *ready_conditions
+
+merge_protections_settings:
+  auto_merge_conditions:
+    - base = main
+
+# One PR at a time, checked in place: Mergify brings the PR up to date with
+# main and waits for its CI before squashing it. In-place checks need the
+# checks in queue_conditions and no separate merge_conditions.
+merge_queue:
+  max_parallel_checks: 1
+
+queue_rules:
+  - name: default
+    queue_conditions:
+      - base = main
+      - -draft
+      - and: *ready_conditions
+    merge_method: squash
+    batch_size: 1
