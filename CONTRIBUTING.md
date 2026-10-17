@@ -57,7 +57,7 @@ user-invocable: false
 
 See the [CONTRIBUTING-SKILLS.md](CONTRIBUTING-SKILLS.md) for the full field reference table.
 
-The description budget of 600 characters per skill keeps the aggregate catalog within the context window budget (WARN at 12,000 characters, FAIL at 15,600). With 9 skills, the total budget usage is approximately 28% of the 15,600 cap.
+The description budget of 600 characters per skill keeps the aggregate catalog within the context window budget (WARN at 12,000 characters, FAIL at 15,600). With 10 skills, the total budget usage is approximately 28% of the 15,600 cap.
 
 ### Cross-Reference Syntax
 
@@ -264,7 +264,7 @@ Before every release, verify:
 
 ## Hooks and MCP Contributions
 
-The plugin includes session hooks (session start context, user prompt routing reminder) and MCP server integrations (Context7 + Microsoft Docs).
+The plugin includes session hooks (session start context, user prompt routing reminder) and MCP server integrations (Microsoft Docs; Context7 is reached over HTTP by the `dotnet-library-docs` skill).
 
 For guidance on contributing to hooks or MCP integrations, see [docs/hooks-and-mcp-guide.md](docs/hooks-and-mcp-guide.md).
 

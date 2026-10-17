@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Context7 is now a skill, not an MCP server** -- the `context7` stdio server (`npx -y @upstash/context7-mcp@latest`) was removed from `.mcp.json` (shared by Claude Code and Codex) and replaced by the new `dotnet-library-docs` skill, which calls the Context7 HTTP API with `curl` on demand. Sessions no longer spawn an `npx`/Node process or carry Context7 tool schemas at startup. The skill documents how to re-add the MCP server for clients that cannot run shell commands.
+
 ## [1.5.0] - 2026-08-17
 
 ### Added

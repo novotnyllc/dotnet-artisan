@@ -25,8 +25,8 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "dotnet-artisan",
-    "shortDescription": "9 .NET skills with process-first routing and domain depth",
-    "longDescription": "Comprehensive .NET development plugin providing 9 skills and 14 specialist agents covering C#, ASP.NET Core, EF Core, Blazor, MAUI, Uno Platform, testing, DevOps, debugging, and cloud-native patterns. Includes version-aware routing, coding standards, and always-loaded simplicity guidelines.",
+    "shortDescription": "10 .NET skills with process-first routing and domain depth",
+    "longDescription": "Comprehensive .NET development plugin providing 10 skills and 14 specialist agents covering C#, ASP.NET Core, EF Core, Blazor, MAUI, Uno Platform, testing, DevOps, debugging, and cloud-native patterns. Includes version-aware routing, coding standards, and always-loaded simplicity guidelines.",
     "developerName": "Claire Novotny LLC",
     "category": "Development",
     "capabilities": [
