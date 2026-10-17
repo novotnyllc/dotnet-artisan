@@ -1,6 +1,6 @@
 # dotnet-artisan -- Plugin Instructions
 
-This repository contains one **dotnet-artisan** plugin under `plugins/dotnet-artisan`. The plugin provides 9 skills (process + domain) and 14 specialist agents for .NET development. It follows the [Agent Skills](https://github.com/anthropics/agent-skills) open standard.
+This repository contains one **dotnet-artisan** plugin under `plugins/dotnet-artisan`. The plugin provides 10 skills (process + domain) and 14 specialist agents for .NET development. It follows the [Agent Skills](https://github.com/anthropics/agent-skills) open standard.
 
 ## Key Conventions
 
@@ -53,7 +53,7 @@ Descriptions must follow the **Action + Domain + Differentiator** formula using 
 ## File Structure
 
 ```
-plugins/dotnet-artisan/skills/<skill-name>/SKILL.md        # 9 skills (flat layout)
+plugins/dotnet-artisan/skills/<skill-name>/SKILL.md        # 10 skills (flat layout)
 plugins/dotnet-artisan/skills/<skill-name>/references/*.md # Companion files with deep content
 plugins/dotnet-artisan/agents/<agent-name>.md              # 14 specialist agents
 plugins/dotnet-artisan/hooks.json                          # Session hooks (startup + user prompt reminder)

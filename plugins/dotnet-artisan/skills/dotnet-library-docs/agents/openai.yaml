@@ -1,0 +1,7 @@
+interface:
+  display_name: "dotnet-library-docs"
+  short_description: "Current NuGet/library docs via Context7 (curl)"
+  default_prompt: "Use $dotnet-library-docs to look up the current Polly retry API before writing the code."
+
+policy:
+  allow_implicit_invocation: true

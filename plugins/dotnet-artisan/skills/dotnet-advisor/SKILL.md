@@ -64,6 +64,7 @@ Identify the primary domain from the request, then LOAD the matching skill — s
 | Project setup, MSBuild, Native AOT, CLI apps, SDK versions | `dotnet-tooling` |
 | Crash dumps, WinDbg, hang analysis, memory diagnostics (Windows) | `dotnet-debugging` |
 | Crash dumps, dotnet-dump, lldb, container diagnostics (Linux/macOS) | `dotnet-debugging` |
+| Current docs or examples for a NuGet/third-party library (Polly, Serilog, MediatR...) | `dotnet-library-docs` |
 | Missing .NET SDK, install dotnet, workloads | `dotnet-tooling` (references/dotnet-sdk-install.md) |
 | Quick script, utility, single-file tool | `dotnet-api` (references/file-based-apps.md) |
 | Excel, Word, PowerPoint, PDF, spreadsheet, document generation | `dotnet-api` (references/office-documents.md) |
@@ -122,6 +123,7 @@ it. Do not proceed as though its guidance were in context.
 | `dotnet-devops` | GitHub Actions, Azure DevOps, containers, NuGet, observability | CI/CD pipelines, packaging, and operations |
 | `dotnet-tooling` | Project setup, MSBuild, Native AOT, profiling, CLI apps, version detection | Build system, performance, and developer tools |
 | `dotnet-debugging` | WinDbg MCP, crash dumps, hang analysis, memory diagnostics | Live and post-mortem dump analysis |
+| `dotnet-library-docs` | Current NuGet/third-party library docs via the Context7 HTTP API (curl) | On-demand lookup; replaces the Context7 MCP server |
 | dotnet-advisor | This skill -- routes to domain skills above | Entry point, loaded after `using-dotnet` |
 
 ---

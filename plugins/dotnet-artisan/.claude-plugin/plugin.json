@@ -30,7 +30,8 @@
     "./skills/dotnet-testing",
     "./skills/dotnet-devops",
     "./skills/dotnet-tooling",
-    "./skills/dotnet-debugging"
+    "./skills/dotnet-debugging",
+    "./skills/dotnet-library-docs"
   ],
   "agents": [
     "./agents/dotnet-architect.md",

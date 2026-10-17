@@ -64,12 +64,13 @@ The plugin configures these MCP servers in `plugins/dotnet-artisan/.mcp.json`:
 
 | Server | Transport | Command / URL | Purpose |
 |-------|-----------|----------------|---------|
-| `context7` | stdio | `npx -y @upstash/context7-mcp@latest` | Library and framework documentation lookup |
 | `microsoftdocs-mcp` | HTTP | `https://learn.microsoft.com/api/mcp` | Official Microsoft Learn search/fetch for .NET and Azure docs |
+
+Third-party library documentation (formerly the `context7` stdio server, `npx -y @upstash/context7-mcp@latest`) is now the `dotnet-library-docs` skill, which calls the Context7 HTTP API with `curl` only when needed. A local stdio server is spawned in every session by both Claude Code and Codex whether or not it is used (measured: 2 processes, ~226 MB, and ~3.3k startup tokens per Codex thread); the skill costs nothing until invoked. To keep the MCP server anyway, add it to your own client config (see the skill's "Restoring the MCP server" section).
 
 ### Requirements
 
-- **Node.js** is required to execute hook scripts (`plugins/dotnet-artisan/scripts/hooks/*.js`) and for MCP servers that use `npx` (Context7). Claude Code requires Node.js on all platforms, so this is always available. Verify with `node --version`.
+- **Node.js** is required to execute hook scripts (`plugins/dotnet-artisan/scripts/hooks/*.js`) (the plugin no longer ships an `npx`-based MCP server). Claude Code requires Node.js on all platforms, so this is always available. Verify with `node --version`.
 - MCP servers start automatically when the plugin is enabled. After enabling or disabling the plugin, restart Claude Code to apply MCP server changes.
 
 ---
@@ -78,7 +79,7 @@ The plugin configures these MCP servers in `plugins/dotnet-artisan/.mcp.json`:
 
 ### `npx` not available
 
-MCP servers configured with `npx` (such as Context7) will not start if Node.js is not installed.
+MCP servers configured with `npx` will not start if Node.js is not installed. The plugin itself no longer ships one; this applies if you added Context7 back yourself.
 
 **Fix**: Install [Node.js](https://nodejs.org/) (LTS recommended). After installation, restart Claude Code so MCP servers can initialize.
 

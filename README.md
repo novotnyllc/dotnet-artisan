@@ -8,7 +8,7 @@
 
 ## Overview
 
-**dotnet-artisan** provides 9 skills (2 routing + 7 domain) and 14 specialist agents for .NET development. It is compatible with Claude Code, GitHub Copilot CLI, and OpenAI Codex. The installable plugin lives at `plugins/dotnet-artisan`. Claude and Copilot consume the Claude plugin manifest there through the root marketplace, while Codex discovers the same plugin through the shared Claire Novotny LLC marketplace and `plugins/dotnet-artisan/.codex-plugin/plugin.json`. Specialist `agents/*.md` are currently used by Claude/Copilot flows; Codex routes through the `skills/*` surface.
+**dotnet-artisan** provides 10 skills (2 routing + 8 domain) and 14 specialist agents for .NET development. It is compatible with Claude Code, GitHub Copilot CLI, and OpenAI Codex. The installable plugin lives at `plugins/dotnet-artisan`. Claude and Copilot consume the Claude plugin manifest there through the root marketplace, while Codex discovers the same plugin through the shared Claire Novotny LLC marketplace and `plugins/dotnet-artisan/.codex-plugin/plugin.json`. Specialist `agents/*.md` are currently used by Claude/Copilot flows; Codex routes through the `skills/*` surface.
 
 The plugin covers the full breadth of the .NET ecosystem:
 - Modern C# patterns, async/await, dependency injection, and source generators
@@ -95,7 +95,7 @@ Compatibility is validated in CI with structural smoke checks via `scripts/run-a
 
 ## Skill Catalog
 
-The plugin organizes 9 skills in a flat directory layout (`plugins/dotnet-artisan/skills/<skill-name>/SKILL.md`), backed by 159 reference files (~62K lines) of deep-dive guidance loaded on demand. Each skill follows the [Agent Skills](https://github.com/anthropics/agent-skills) open standard with structured frontmatter and progressive disclosure — SKILL.md routing tables point to `references/*.md` companion files that Claude reads only when relevant.
+The plugin organizes 10 skills in a flat directory layout (`plugins/dotnet-artisan/skills/<skill-name>/SKILL.md`), backed by 159 reference files (~62K lines) of deep-dive guidance loaded on demand. Each skill follows the [Agent Skills](https://github.com/anthropics/agent-skills) open standard with structured frontmatter and progressive disclosure — SKILL.md routing tables point to `references/*.md` companion files that Claude reads only when relevant.
 
 | Skill | Domain | Key Topics |
 |---|---|---|
@@ -108,6 +108,7 @@ The plugin organizes 9 skills in a flat directory layout (`plugins/dotnet-artisa
 | **dotnet-devops** | CI/CD & operations | GitHub Actions, Azure DevOps, containers, NuGet, MSIX, observability, structured logging |
 | **dotnet-tooling** | Build & developer tools | MSBuild, Native AOT, trimming, CLI apps, profiling, version detection, project setup |
 | **dotnet-debugging** | Debugging | WinDbg debugging, memory analysis, dump file investigation |
+| **dotnet-library-docs** | Library docs | Current NuGet/third-party library docs via the Context7 HTTP API (curl, on demand) |
 
 ## Agents
 
@@ -162,7 +163,7 @@ graph TB
             CR[code-review-agent]
         end
 
-        subgraph Skills["9 Skills"]
+        subgraph Skills["10 Skills"]
             UD[using-dotnet<br/>Gateway]
             ADV[dotnet-advisor<br/>Router]
             CS[dotnet-csharp<br/>C# Language]
@@ -172,6 +173,7 @@ graph TB
             DEVOPS[dotnet-devops<br/>CI/CD/Ops]
             TOOL[dotnet-tooling<br/>Build/Tools]
             DBG[dotnet-debugging<br/>Debugging]
+            DOCS[dotnet-library-docs<br/>Library Docs]
         end
 
         subgraph Infra["Infrastructure"]
